@@ -108,7 +108,7 @@ export function DevTools({ position = "bottom-right" }: DevToolsProps) {
             {message && (
               <p
                 className={`text-xs ${
-                  message.startsWith("Error") ? "text-red-500" : "text-green-600"
+                  message.startsWith("Error") ? "text-stark-orange" : "text-green-700"
                 }`}
               >
                 {message}

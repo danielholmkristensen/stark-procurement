@@ -27,11 +27,12 @@ export function StatusIndicator({
   status: "online" | "offline" | "warning" | "toggle";
   label?: string;
 }) {
+  // STARK Design: Green for online, Orange for attention states
   const colors = {
     online: "bg-green-500",
-    offline: "bg-red-500",
-    warning: "bg-amber-500",
-    toggle: "bg-amber-500",
+    offline: "bg-stark-orange",
+    warning: "bg-stark-orange",
+    toggle: "bg-stark-navy",
   };
 
   const showPing = status === "online";

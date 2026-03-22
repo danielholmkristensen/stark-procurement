@@ -40,9 +40,9 @@ export function KPICard({
           <span
             className={`text-xs font-medium ${
               trend.direction === "up"
-                ? "text-green-600"
+                ? "text-green-700"
                 : trend.direction === "down"
-                ? "text-red-600"
+                ? "text-stark-navy"
                 : "text-stark-navy"
             }`}
           >

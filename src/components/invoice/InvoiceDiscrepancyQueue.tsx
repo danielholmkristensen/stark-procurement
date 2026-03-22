@@ -62,13 +62,14 @@ export function InvoiceDiscrepancyQueue() {
   };
 
   const getDiscrepancyTypeColor = (result?: MatchResult) => {
+    // STARK Design: Navy 80%, Green 15% (success), Orange 5% (action required)
     if (!result) return "bg-gray-100 text-gray-700";
     const map: Record<MatchResult, string> = {
-      full_match: "bg-green-100 text-green-700",
-      quantity_mismatch: "bg-yellow-100 text-yellow-700",
-      price_mismatch: "bg-red-100 text-red-700",
-      missing_po: "bg-red-100 text-red-700",
-      partial_match: "bg-orange-100 text-orange-700",
+      full_match: "bg-green-100 text-green-800",
+      quantity_mismatch: "bg-stark-orange-10 text-stark-navy border border-stark-orange/30",
+      price_mismatch: "bg-stark-orange-10 text-stark-navy border border-stark-orange/30",
+      missing_po: "bg-stark-orange-10 text-stark-navy border border-stark-orange/30",
+      partial_match: "bg-stark-orange-10 text-stark-navy border border-stark-orange/30",
     };
     return map[result] ?? "bg-gray-100 text-gray-700";
   };
@@ -152,7 +153,7 @@ export function InvoiceDiscrepancyQueue() {
                       {getDiscrepancyTypeLabel(invoice.matchResult)}
                     </span>
                     {invoice.escalationLevel === "urgent" && (
-                      <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">
+                      <span className="px-2 py-1 bg-stark-orange-10 text-stark-orange border border-stark-orange/30 rounded text-xs font-medium">
                         URGENT
                       </span>
                     )}
@@ -178,12 +179,12 @@ export function InvoiceDiscrepancyQueue() {
                   </div>
 
                   {/* Discrepancy Details */}
-                  <div className="mt-3 p-3 bg-red-50 rounded-lg">
+                  <div className="mt-3 p-3 bg-stark-orange-10 rounded-lg">
                     <div className="flex items-center gap-4">
                       {invoice.discrepancyAmount && (
                         <div>
                           <span className="text-sm text-gray-500">Discrepancy Amount:</span>{" "}
-                          <span className="font-bold text-red-600">
+                          <span className="font-bold text-stark-orange">
                             {formatCurrency(invoice.discrepancyAmount, invoice.currency)}
                           </span>
                         </div>
@@ -240,7 +241,7 @@ export function InvoiceDiscrepancyQueue() {
             </div>
             <div className="text-sm text-gray-600">
               Total discrepancy amount:{" "}
-              <span className="font-bold text-red-600">
+              <span className="font-bold text-stark-orange">
                 {formatCurrency(
                   sortedInvoices.reduce((sum, inv) => sum + (inv.discrepancyAmount ?? 0), 0),
                   "DKK"

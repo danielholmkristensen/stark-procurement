@@ -72,7 +72,7 @@ export function PODetail({ poId }: PODetailProps) {
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-4 border-b border-gray-200 flex items-center gap-2">
               <h4 className="font-semibold text-gray-900">Packet Specifications</h4>
-              <span className="px-2 py-0.5 text-xs bg-amber-100 text-amber-800 rounded">Critical for Receiving</span>
+              <span className="px-2 py-0.5 text-xs bg-stark-orange-10 text-stark-navy border border-stark-orange/30 rounded">Critical for Receiving</span>
             </div>
             <div className="divide-y divide-gray-100">
               {linkedPRs.map((pr, idx) => (
@@ -146,7 +146,7 @@ export function PODetail({ poId }: PODetailProps) {
           {po.supplierEmail && <p className="text-sm text-gray-500">{po.supplierEmail}</p>}
           <div className="flex gap-2 mt-3">
             {po.sentVia === "edi" && <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded">EDI</span>}
-            {po.sentVia === "email" && <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">Email</span>}
+            {po.sentVia === "email" && <span className="px-2 py-0.5 bg-stark-navy-10 text-stark-navy text-xs rounded">Email</span>}
           </div>
         </div>
 

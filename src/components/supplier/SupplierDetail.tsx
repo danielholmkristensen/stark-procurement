@@ -169,7 +169,7 @@ export function SupplierDetail({ supplierId }: SupplierDetailProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">Preferred Channel</span>
-                  <span className="px-2 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-700">
+                  <span className="px-2 py-0.5 text-xs font-medium rounded bg-stark-navy-10 text-stark-navy">
                     {supplier.preferredCommunication.toUpperCase()}
                   </span>
                 </div>
@@ -198,10 +198,8 @@ export function SupplierDetail({ supplierId }: SupplierDetailProps) {
                   <span
                     className={`text-sm font-medium ${
                       supplier.onTimeDeliveryRate >= 0.9
-                        ? "text-green-600"
-                        : supplier.onTimeDeliveryRate >= 0.75
-                        ? "text-yellow-600"
-                        : "text-red-600"
+                        ? "text-green-700"
+                        : "text-stark-orange"
                     }`}
                   >
                     {Math.round(supplier.onTimeDeliveryRate * 100)}%
@@ -212,10 +210,8 @@ export function SupplierDetail({ supplierId }: SupplierDetailProps) {
                   <span
                     className={`text-sm font-medium ${
                       supplier.qualityScore >= 0.9
-                        ? "text-green-600"
-                        : supplier.qualityScore >= 0.75
-                        ? "text-yellow-600"
-                        : "text-red-600"
+                        ? "text-green-700"
+                        : "text-stark-orange"
                     }`}
                   >
                     {Math.round(supplier.qualityScore * 100)}%
@@ -323,7 +319,7 @@ export function SupplierDetail({ supplierId }: SupplierDetailProps) {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500">Active POs</span>
-              <span className="text-lg font-bold text-blue-600">{activePOs}</span>
+              <span className="text-lg font-bold text-stark-navy">{activePOs}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500">Total PO Value</span>

@@ -89,7 +89,7 @@ export function InvoiceMatchResults() {
         <Card>
           <CardContent className="p-4">
             <div className="text-sm text-gray-500">Discrepancies</div>
-            <div className="text-3xl font-bold text-red-600">{stats.discrepancies}</div>
+            <div className="text-3xl font-bold text-stark-orange">{stats.discrepancies}</div>
             <div className="text-xs text-gray-400">
               {stats.total > 0 ? Math.round((stats.discrepancies / stats.total) * 100) : 0}% of total
             </div>
@@ -131,9 +131,7 @@ export function InvoiceMatchResults() {
                           className={`h-full ${
                             result === "full_match"
                               ? "bg-green-500"
-                              : result === "quantity_mismatch" || result === "partial_match"
-                              ? "bg-yellow-500"
-                              : "bg-red-500"
+                              : "bg-stark-orange"
                           }`}
                           style={{ width: `${percentage}%` }}
                         />
@@ -229,10 +227,8 @@ export function InvoiceMatchResults() {
                       <span
                         className={`font-medium ${
                           invoice.matchScore >= 0.9
-                            ? "text-green-600"
-                            : invoice.matchScore >= 0.7
-                            ? "text-yellow-600"
-                            : "text-red-600"
+                            ? "text-green-700"
+                            : "text-stark-orange"
                         }`}
                       >
                         {Math.round(invoice.matchScore * 100)}%

@@ -100,15 +100,15 @@ export function PRIngestionMonitor() {
     }).format(value);
   }
 
-  // Get status color
+  // Get status color - STARK Design: Green for success, Orange for action/attention
   const getStatusColor = (status: "online" | "offline" | "toggle-off") => {
     switch (status) {
       case "online":
-        return "text-green-600";
+        return "text-green-700";
       case "offline":
-        return "text-red-600";
+        return "text-stark-orange";
       case "toggle-off":
-        return "text-amber-600";
+        return "text-stark-navy";
     }
   };
 
@@ -195,10 +195,8 @@ export function PRIngestionMonitor() {
                 <span
                   className={`ml-auto text-xs ${
                     activity.status === "success"
-                      ? "text-green-600"
-                      : activity.status === "error"
-                      ? "text-red-600"
-                      : "text-amber-600"
+                      ? "text-green-700"
+                      : "text-stark-orange"
                   }`}
                 >
                   {activity.status === "success"

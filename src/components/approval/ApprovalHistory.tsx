@@ -104,10 +104,11 @@ export function ApprovalHistory() {
   };
 
   const getEntityTypeBadge = (type: string) => {
+    // STARK Design: All entity types use navy variants - no blue/purple
     const colors: Record<string, string> = {
-      pr: "bg-blue-100 text-blue-700",
-      po: "bg-green-100 text-green-700",
-      invoice: "bg-purple-100 text-purple-700",
+      pr: "bg-stark-navy-10 text-stark-navy",
+      po: "bg-stark-navy-10 text-stark-navy",
+      invoice: "bg-stark-navy-10 text-stark-navy",
     };
     return colors[type] ?? "bg-gray-100 text-gray-700";
   };
@@ -149,7 +150,7 @@ export function ApprovalHistory() {
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="text-sm text-gray-500">Rejected</div>
-          <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
+          <div className="text-2xl font-bold text-stark-orange">{stats.rejected}</div>
           <div className="text-xs text-gray-400">
             {stats.total > 0 ? Math.round((stats.rejected / stats.total) * 100) : 0}% rejection rate
           </div>

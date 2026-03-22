@@ -91,10 +91,11 @@ export function ApprovalQueue() {
 
 
   const getEntityTypeBadge = (type: string) => {
+    // STARK Design: All entity types use navy variants - no blue/purple/teal
     const colors: Record<string, string> = {
-      pr: "bg-blue-100 text-blue-700",
-      po: "bg-green-100 text-green-700",
-      invoice: "bg-purple-100 text-purple-700",
+      pr: "bg-stark-navy-10 text-stark-navy",
+      po: "bg-stark-navy-10 text-stark-navy",
+      invoice: "bg-stark-navy-10 text-stark-navy",
     };
     return colors[type] ?? "bg-gray-100 text-gray-700";
   };
@@ -150,7 +151,7 @@ export function ApprovalQueue() {
           }`}
         >
           <div className="text-sm text-gray-500">PRs</div>
-          <div className="text-2xl font-bold text-blue-600">{stats.pr}</div>
+          <div className="text-2xl font-bold text-stark-navy">{stats.pr}</div>
         </button>
         <button
           onClick={() => setEntityFilter("po")}
@@ -161,7 +162,7 @@ export function ApprovalQueue() {
           }`}
         >
           <div className="text-sm text-gray-500">POs</div>
-          <div className="text-2xl font-bold text-green-600">{stats.po}</div>
+          <div className="text-2xl font-bold text-stark-navy">{stats.po}</div>
         </button>
         <button
           onClick={() => setEntityFilter("invoice")}
@@ -172,11 +173,11 @@ export function ApprovalQueue() {
           }`}
         >
           <div className="text-sm text-gray-500">Invoices</div>
-          <div className="text-2xl font-bold text-purple-600">{stats.invoice}</div>
+          <div className="text-2xl font-bold text-stark-navy">{stats.invoice}</div>
         </button>
-        <div className="p-4 rounded-lg border border-red-200 bg-red-50">
-          <div className="text-sm text-red-600">Urgent</div>
-          <div className="text-2xl font-bold text-red-600">{stats.urgent}</div>
+        <div className="p-4 rounded-lg border border-stark-orange/30 bg-stark-orange-10">
+          <div className="text-sm text-stark-navy">Urgent</div>
+          <div className="text-2xl font-bold text-stark-orange">{stats.urgent}</div>
         </div>
       </div>
 
@@ -239,7 +240,7 @@ export function ApprovalQueue() {
                         </Link>
                       )}
                       {approval.escalationLevel === "urgent" && (
-                        <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium animate-pulse">
+                        <span className="px-2 py-1 bg-stark-orange-10 text-stark-orange border border-stark-orange/30 rounded text-xs font-medium">
                           URGENT
                         </span>
                       )}
@@ -269,7 +270,7 @@ export function ApprovalQueue() {
                     </div>
 
                     {approval.amount > approval.threshold && (
-                      <div className="mt-2 text-sm text-orange-600">
+                      <div className="mt-2 text-sm text-stark-orange">
                         ⚠️ Amount exceeds threshold by{" "}
                         {formatCurrency(approval.amount - approval.threshold, approval.currency)}
                       </div>

@@ -80,10 +80,11 @@ export function SupplierList({ showActiveOnly = false }: SupplierListProps) {
   );
 
   const getCommunicationBadge = (method: string) => {
+    // STARK Design: All communication methods use navy variants - no blue/purple
     const colors: Record<string, string> = {
-      email: "bg-blue-100 text-blue-700",
-      edi: "bg-green-100 text-green-700",
-      portal: "bg-purple-100 text-purple-700",
+      email: "bg-stark-navy-10 text-stark-navy",
+      edi: "bg-stark-navy-10 text-stark-navy",
+      portal: "bg-stark-navy-10 text-stark-navy",
     };
     return colors[method] ?? "bg-gray-100 text-gray-700";
   };
@@ -135,7 +136,7 @@ export function SupplierList({ showActiveOnly = false }: SupplierListProps) {
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="text-sm text-gray-500">EDI Enabled</div>
-          <div className="text-2xl font-bold text-blue-600">
+          <div className="text-2xl font-bold text-stark-navy">
             {allSuppliers?.filter((s) => s.supportsEDI).length ?? 0}
           </div>
         </div>
@@ -243,10 +244,8 @@ export function SupplierList({ showActiveOnly = false }: SupplierListProps) {
                       <div
                         className={`text-sm font-medium ${
                           supplier.onTimeDeliveryRate >= 0.9
-                            ? "text-green-600"
-                            : supplier.onTimeDeliveryRate >= 0.75
-                            ? "text-yellow-600"
-                            : "text-red-600"
+                            ? "text-green-700"
+                            : "text-stark-orange"
                         }`}
                       >
                         {Math.round(supplier.onTimeDeliveryRate * 100)}%
@@ -257,10 +256,8 @@ export function SupplierList({ showActiveOnly = false }: SupplierListProps) {
                       <div
                         className={`text-sm font-medium ${
                           supplier.qualityScore >= 0.9
-                            ? "text-green-600"
-                            : supplier.qualityScore >= 0.75
-                            ? "text-yellow-600"
-                            : "text-red-600"
+                            ? "text-green-700"
+                            : "text-stark-orange"
                         }`}
                       >
                         {Math.round(supplier.qualityScore * 100)}%

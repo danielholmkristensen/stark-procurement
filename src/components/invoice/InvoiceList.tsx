@@ -173,13 +173,13 @@ export function InvoiceList({
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="text-sm text-gray-500">Pending Match</div>
-          <div className="text-2xl font-bold text-yellow-600">
+          <div className="text-2xl font-bold text-stark-orange">
             {allInvoices?.filter((i) => i.status === "pending_match").length ?? 0}
           </div>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="text-sm text-gray-500">Discrepancies</div>
-          <div className="text-2xl font-bold text-red-600">
+          <div className="text-2xl font-bold text-stark-orange">
             {allInvoices?.filter((i) => i.status === "discrepancy").length ?? 0}
           </div>
         </div>
