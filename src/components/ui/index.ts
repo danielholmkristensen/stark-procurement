@@ -10,3 +10,6 @@ export { Textarea } from "./Textarea";
 export { FormField } from "./FormField";
 export { SearchInput } from "./SearchInput";
 export { DateInput } from "./DateInput";
+export { CollapsibleSection, shouldExpandByDefault } from "./CollapsibleSection";
+export { CompactStats, CompactStatsVertical } from "./CompactStats";
+export * from "./Icon";

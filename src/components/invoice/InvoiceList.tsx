@@ -1,84 +1,109 @@
 "use client";
 
-import { useState } from "react";
+/**
+ * Invoice List
+ *
+ * Grouped by status with collapsible sections.
+ * Discrepancies highlighted for action.
+ * Follows Command Center UX principles.
+ */
+
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useInvoices, useSuppliers } from "@/hooks";
-import { Button, SearchInput, Select, StatusBadge, EscalationIndicator, getEscalationCardClass } from "@/components/ui";
-import type { InvoiceStatus, MatchResult } from "@/lib/db";
+import {
+  Button,
+  SearchInput,
+  Select,
+  StatusBadge,
+  EscalationIndicator,
+  CollapsibleSection,
+  CompactStats,
+  WarningIcon,
+} from "@/components/ui";
+import type { InvoiceStatus, MatchResult, Invoice } from "@/lib/db";
 
-interface InvoiceListProps {
-  initialStatus?: InvoiceStatus | "all";
-  initialMatchResult?: MatchResult | "all";
-}
+const statusOrder: InvoiceStatus[] = [
+  "discrepancy",
+  "pending_match",
+  "received",
+  "matched",
+  "approved",
+  "paid",
+  "rejected",
+];
+
+const statusLabels: Record<InvoiceStatus, string> = {
+  received: "Received",
+  pending_match: "Pending Match",
+  matched: "Matched",
+  discrepancy: "Discrepancy",
+  approved: "Approved",
+  paid: "Paid",
+  rejected: "Rejected",
+};
 
 const statusOptions = [
   { value: "all", label: "All Statuses" },
-  { value: "received", label: "Received" },
-  { value: "pending_match", label: "Pending Match" },
-  { value: "matched", label: "Matched" },
   { value: "discrepancy", label: "Discrepancy" },
+  { value: "pending_match", label: "Pending Match" },
+  { value: "received", label: "Received" },
+  { value: "matched", label: "Matched" },
   { value: "approved", label: "Approved" },
   { value: "paid", label: "Paid" },
-  { value: "rejected", label: "Rejected" },
 ];
 
-const matchResultOptions = [
-  { value: "all", label: "All Match Results" },
-  { value: "full_match", label: "Full Match" },
-  { value: "quantity_mismatch", label: "Quantity Mismatch" },
-  { value: "price_mismatch", label: "Price Mismatch" },
-  { value: "missing_po", label: "Missing PO" },
-  { value: "partial_match", label: "Partial Match" },
-];
-
-export function InvoiceList({
-  initialStatus = "all",
-  initialMatchResult = "all",
-}: InvoiceListProps) {
+export function InvoiceList() {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<InvoiceStatus | "all">(initialStatus);
-  const [matchResult, setMatchResult] = useState<MatchResult | "all">(initialMatchResult);
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(["discrepancy", "pending_match"])
+  );
 
   const allInvoices = useInvoices();
   const allSuppliers = useSuppliers();
 
-  const supplierMap = new Map(allSuppliers?.map((s) => [s.id, s]) ?? []);
-
   // Filter invoices
-  const filteredInvoices = (allInvoices ?? []).filter((invoice) => {
-    // Search filter
-    if (search) {
-      const searchLower = search.toLowerCase();
-      const matchesSearch =
-        invoice.invoiceNumber.toLowerCase().includes(searchLower) ||
-        invoice.supplierName.toLowerCase().includes(searchLower) ||
-        invoice.supplierInvoiceRef.toLowerCase().includes(searchLower);
-      if (!matchesSearch) return false;
-    }
+  const filteredInvoices = useMemo(() => {
+    return (allInvoices ?? []).filter((invoice) => {
+      if (search) {
+        const searchLower = search.toLowerCase();
+        const matchesSearch =
+          invoice.invoiceNumber.toLowerCase().includes(searchLower) ||
+          invoice.supplierName.toLowerCase().includes(searchLower) ||
+          invoice.supplierInvoiceRef.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+      if (statusFilter !== "all" && invoice.status !== statusFilter) return false;
+      return true;
+    });
+  }, [allInvoices, search, statusFilter]);
 
-    // Status filter
-    if (status !== "all" && invoice.status !== status) return false;
-
-    // Match result filter
-    if (matchResult !== "all" && invoice.matchResult !== matchResult) return false;
-
-    return true;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(filteredInvoices.length / pageSize);
-  const paginatedInvoices = filteredInvoices.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  );
+  // Group by status
+  const groupedInvoices = useMemo(() => {
+    const groups: Record<InvoiceStatus, Invoice[]> = {
+      received: [],
+      pending_match: [],
+      matched: [],
+      discrepancy: [],
+      approved: [],
+      paid: [],
+      rejected: [],
+    };
+    filteredInvoices.forEach((invoice) => {
+      groups[invoice.status].push(invoice);
+    });
+    // Sort each group by date
+    Object.values(groups).forEach((group) => {
+      group.sort((a, b) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime());
+    });
+    return groups;
+  }, [filteredInvoices]);
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("en-GB", {
       day: "numeric",
       month: "short",
-      year: "numeric",
     });
   };
 
@@ -86,77 +111,96 @@ export function InvoiceList({
     return new Intl.NumberFormat("da-DK", {
       style: "currency",
       currency,
+      minimumFractionDigits: 0,
     }).format(amount);
   };
 
-  const getStatusVariant = (invoiceStatus: InvoiceStatus) => {
-    const map: Record<InvoiceStatus, "success" | "warning" | "error" | "info" | "primary"> = {
-      received: "info",
-      pending_match: "warning",
-      matched: "success",
-      discrepancy: "error",
-      approved: "success",
-      paid: "primary",
-      rejected: "error",
-    };
-    return map[invoiceStatus] ?? "info";
+  const getStatusVariant = (status: InvoiceStatus): "default" | "success" | "warning" => {
+    switch (status) {
+      case "discrepancy":
+        return "warning";
+      case "pending_match":
+        return "default";
+      case "approved":
+      case "paid":
+      case "matched":
+        return "success";
+      default:
+        return "default";
+    }
   };
 
-  const getMatchResultVariant = (result?: MatchResult) => {
-    if (!result) return "info";
-    const map: Record<MatchResult, "success" | "warning" | "error" | "info"> = {
-      full_match: "success",
-      quantity_mismatch: "warning",
-      price_mismatch: "error",
-      missing_po: "error",
-      partial_match: "warning",
-    };
-    return map[result] ?? "info";
-  };
-
-  const getMatchResultLabel = (result?: MatchResult) => {
-    if (!result) return "—";
-    const map: Record<MatchResult, string> = {
+  const getMatchLabel = (result?: MatchResult) => {
+    if (!result) return null;
+    const labels: Record<MatchResult, string> = {
       full_match: "Full Match",
       quantity_mismatch: "Qty Mismatch",
       price_mismatch: "Price Mismatch",
       missing_po: "Missing PO",
-      partial_match: "Partial Match",
+      partial_match: "Partial",
     };
-    return map[result] ?? result;
+    return labels[result];
   };
 
+  const isActionRequired = (status: InvoiceStatus) =>
+    status === "discrepancy" || status === "pending_match";
+
+  // Stats
+  const stats = [
+    {
+      label: "Total",
+      value: allInvoices?.length ?? 0,
+      filter: "all",
+    },
+    {
+      label: "Discrepancy",
+      value: allInvoices?.filter((i) => i.status === "discrepancy").length ?? 0,
+      filter: "discrepancy",
+      variant: "action" as const,
+    },
+    {
+      label: "Pending",
+      value: allInvoices?.filter((i) => i.status === "pending_match").length ?? 0,
+      filter: "pending_match",
+      variant: "warning" as const,
+    },
+    {
+      label: "Approved",
+      value: allInvoices?.filter((i) => i.status === "approved" || i.status === "paid").length ?? 0,
+      filter: "approved",
+      variant: "success" as const,
+    },
+  ];
+
+  const toggleSection = (status: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) {
+        next.delete(status);
+      } else {
+        next.add(status);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
+      {/* Compact Stats + Filters */}
+      <div className="bg-white rounded-lg border border-gray-200 p-3">
+        <div className="flex items-center gap-3">
+          <CompactStats
+            stats={stats}
+            activeFilter={statusFilter}
+            onFilterChange={(f) => setStatusFilter(f as typeof statusFilter)}
+          />
+          <div className="flex-1">
             <SearchInput
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search invoices..."
             />
           </div>
-          <Select
-            options={statusOptions}
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value as InvoiceStatus | "all");
-              setPage(1);
-            }}
-            className="w-40"
-          />
-          <Select
-            options={matchResultOptions}
-            value={matchResult}
-            onChange={(e) => {
-              setMatchResult(e.target.value as MatchResult | "all");
-              setPage(1);
-            }}
-            className="w-44"
-          />
           <Link href="/invoices/discrepancies">
             <Button variant="outline" size="sm">
               Discrepancy Queue
@@ -165,157 +209,91 @@ export function InvoiceList({
         </div>
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Total Invoices</div>
-          <div className="text-2xl font-bold text-stark-navy">{allInvoices?.length ?? 0}</div>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Pending Match</div>
-          <div className="text-2xl font-bold text-stark-orange">
-            {allInvoices?.filter((i) => i.status === "pending_match").length ?? 0}
+      {/* Grouped Invoice List */}
+      <div className="space-y-3">
+        {filteredInvoices.length === 0 ? (
+          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
+            {search || statusFilter !== "all"
+              ? "No invoices match your filters"
+              : "No invoices found"}
           </div>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Discrepancies</div>
-          <div className="text-2xl font-bold text-stark-orange">
-            {allInvoices?.filter((i) => i.status === "discrepancy").length ?? 0}
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-sm text-gray-500">Approved</div>
-          <div className="text-2xl font-bold text-green-600">
-            {allInvoices?.filter((i) => i.status === "approved").length ?? 0}
-          </div>
-        </div>
-      </div>
+        ) : (
+          statusOrder.map((status) => {
+            const invoices = groupedInvoices[status];
+            if (invoices.length === 0) return null;
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Invoice #
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Supplier
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Invoice Date
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Due Date
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                Amount
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Status
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Match
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {paginatedInvoices.map((invoice) => (
-              <tr
-                key={invoice.id}
-                className={`hover:bg-gray-50 ${getEscalationCardClass(invoice.escalationLevel).replace('border-', 'border-l-2 border-l-')}`}
+            const isExpanded = expandedSections.has(status);
+            const needsAction = isActionRequired(status);
+
+            return (
+              <div
+                key={status}
+                className={`rounded-lg border overflow-hidden ${
+                  needsAction ? "border-stark-orange/30 bg-stark-orange-10/20" : "border-gray-200"
+                }`}
               >
-                <td className="px-4 py-3">
+                <button
+                  onClick={() => toggleSection(status)}
+                  className={`w-full flex items-center justify-between p-3 transition-colors ${
+                    needsAction ? "bg-stark-orange-10/30 hover:bg-stark-orange-10/50" : "bg-gray-50 hover:bg-gray-100"
+                  }`}
+                >
                   <div className="flex items-center gap-2">
-                    <EscalationIndicator level={invoice.escalationLevel} />
-                    <Link
-                      href={`/invoices/${invoice.id}`}
-                      className="font-medium text-stark-navy hover:underline"
-                    >
-                      {invoice.invoiceNumber}
-                    </Link>
+                    <span className="text-gray-400">{isExpanded ? "▼" : "▶"}</span>
+                    <span className="font-medium text-sm text-gray-900">{statusLabels[status]}</span>
+                    <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${
+                      needsAction ? "bg-stark-orange/20 text-stark-orange" : "bg-gray-200 text-gray-700"
+                    }`}>
+                      {invoices.length}
+                    </span>
                   </div>
-                  <div className="text-xs text-gray-500">{invoice.supplierInvoiceRef}</div>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900">
-                  {invoice.supplierName}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-500">
-                  {formatDate(invoice.invoiceDate)}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-500">
-                  {formatDate(invoice.dueDate)}
-                </td>
-                <td className="px-4 py-3 text-sm text-right font-medium">
-                  {formatCurrency(invoice.total, invoice.currency)}
-                </td>
-                <td className="px-4 py-3">
-                  <StatusBadge
-                    status={invoice.status.replace(/_/g, " ")}
-                    variant={getStatusVariant(invoice.status)}
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  {invoice.matchResult ? (
-                    <StatusBadge
-                      status={getMatchResultLabel(invoice.matchResult)}
-                      variant={getMatchResultVariant(invoice.matchResult)}
-                    />
-                  ) : (
-                    <span className="text-gray-400">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link href={`/invoices/${invoice.id}`}>
-                    <Button variant="ghost" size="sm">
-                      View →
-                    </Button>
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {paginatedInvoices.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
-                  No invoices found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                </button>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Showing {(page - 1) * pageSize + 1} to{" "}
-            {Math.min(page * pageSize, filteredInvoices.length)} of{" "}
-            {filteredInvoices.length} invoices
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+                {isExpanded && (
+                  <div className="divide-y divide-gray-100">
+                    {invoices.map((invoice) => (
+                      <Link
+                        key={invoice.id}
+                        href={`/invoices/${invoice.id}`}
+                        className="flex items-center justify-between p-3 hover:bg-gray-50 group"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <EscalationIndicator level={invoice.escalationLevel} />
+                          <div className="min-w-0">
+                            <div className="font-medium text-stark-navy group-hover:underline">
+                              {invoice.invoiceNumber}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {invoice.supplierName}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="text-gray-500 w-20">{formatDate(invoice.invoiceDate)}</span>
+                          <span className="font-medium text-stark-navy w-28 text-right">
+                            {formatCurrency(invoice.total, invoice.currency)}
+                          </span>
+                          {invoice.matchResult && (
+                            <span className={`px-2 py-0.5 rounded text-xs ${
+                              invoice.matchResult === "full_match"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-stark-orange-10 text-stark-navy border border-stark-orange/30"
+                            }`}>
+                              {getMatchLabel(invoice.matchResult)}
+                            </span>
+                          )}
+                          <span className="text-stark-navy group-hover:text-stark-orange">→</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }

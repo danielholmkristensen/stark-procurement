@@ -1,6 +1,14 @@
 "use client";
 
-import { useState } from "react";
+/**
+ * Approval Queue
+ *
+ * Grouped by escalation level with collapsible sections.
+ * Urgent/Action expanded by default, others collapsed.
+ * Follows Command Center UX principles.
+ */
+
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   usePendingApprovals,
@@ -10,8 +18,30 @@ import {
   approveRequest,
   rejectRequest,
 } from "@/hooks";
-import { Button, StatusBadge, SearchInput, Select, EscalationIndicator, EscalationBadge, getEscalationCardClass } from "@/components/ui";
-import type { EscalationLevel } from "@/lib/db";
+import {
+  Button,
+  SearchInput,
+  Select,
+  EscalationIndicator,
+  CollapsibleSection,
+  shouldExpandByDefault,
+  CompactStats,
+  PRIcon,
+  POIcon,
+  InvoiceIcon,
+  WarningIcon,
+} from "@/components/ui";
+import type { EscalationLevel, Approval } from "@/lib/db";
+
+const escalationLabels: Record<EscalationLevel, string> = {
+  urgent: "Urgent",
+  action: "Action Required",
+  attention: "Needs Review",
+  awareness: "Pending",
+  ambient: "New",
+};
+
+const escalationOrder: EscalationLevel[] = ["urgent", "action", "attention", "awareness", "ambient"];
 
 export function ApprovalQueue() {
   const [search, setSearch] = useState("");
@@ -27,35 +57,40 @@ export function ApprovalQueue() {
   const invoiceMap = new Map(allInvoices?.map((inv) => [inv.id, inv]) ?? []);
 
   // Filter approvals
-  const filteredApprovals = (pendingApprovals ?? []).filter((approval) => {
-    if (search) {
-      const searchLower = search.toLowerCase();
-      const entity = getEntity(approval.entityType, approval.entityId);
-      const entityNumber = entity?.number ?? "";
-      const matchesSearch =
-        entityNumber.toLowerCase().includes(searchLower) ||
-        approval.requestedByName.toLowerCase().includes(searchLower);
-      if (!matchesSearch) return false;
-    }
+  const filteredApprovals = useMemo(() => {
+    return (pendingApprovals ?? []).filter((approval) => {
+      if (search) {
+        const searchLower = search.toLowerCase();
+        const entity = getEntity(approval.entityType, approval.entityId);
+        const entityNumber = entity?.number ?? "";
+        const matchesSearch =
+          entityNumber.toLowerCase().includes(searchLower) ||
+          approval.requestedByName.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+      if (entityFilter !== "all" && approval.entityType !== entityFilter) return false;
+      return true;
+    });
+  }, [pendingApprovals, search, entityFilter]);
 
-    if (entityFilter !== "all" && approval.entityType !== entityFilter) return false;
-
-    return true;
-  });
-
-  // Sort by escalation level (urgent first), then by date
-  const sortedApprovals = [...filteredApprovals].sort((a, b) => {
-    const levelOrder: Record<EscalationLevel, number> = {
-      urgent: 0,
-      action: 1,
-      attention: 2,
-      awareness: 3,
-      ambient: 4,
+  // Group by escalation level
+  const groupedApprovals = useMemo(() => {
+    const groups: Record<EscalationLevel, Approval[]> = {
+      urgent: [],
+      action: [],
+      attention: [],
+      awareness: [],
+      ambient: [],
     };
-    const levelDiff = levelOrder[a.escalationLevel] - levelOrder[b.escalationLevel];
-    if (levelDiff !== 0) return levelDiff;
-    return new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime();
-  });
+    filteredApprovals.forEach((approval) => {
+      groups[approval.escalationLevel].push(approval);
+    });
+    // Sort each group by date
+    Object.values(groups).forEach((group) => {
+      group.sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
+    });
+    return groups;
+  }, [filteredApprovals]);
 
   function getEntity(type: string, id: string) {
     if (type === "pr") {
@@ -73,10 +108,19 @@ export function ApprovalQueue() {
     return null;
   }
 
+  const EntityIcon = ({ type }: { type: string }) => {
+    const iconClass = "text-stark-navy";
+    if (type === "pr") return <PRIcon size={14} className={iconClass} />;
+    if (type === "po") return <POIcon size={14} className={iconClass} />;
+    if (type === "invoice") return <InvoiceIcon size={14} className={iconClass} />;
+    return null;
+  };
+
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat("da-DK", {
       style: "currency",
       currency,
+      minimumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -84,20 +128,7 @@ export function ApprovalQueue() {
     return new Date(date).toLocaleDateString("en-GB", {
       day: "numeric",
       month: "short",
-      hour: "numeric",
-      minute: "2-digit",
     });
-  };
-
-
-  const getEntityTypeBadge = (type: string) => {
-    // STARK Design: All entity types use navy variants - no blue/purple/teal
-    const colors: Record<string, string> = {
-      pr: "bg-stark-navy-10 text-stark-navy",
-      po: "bg-stark-navy-10 text-stark-navy",
-      invoice: "bg-stark-navy-10 text-stark-navy",
-    };
-    return colors[type] ?? "bg-gray-100 text-gray-700";
   };
 
   const handleApprove = async (id: string) => {
@@ -111,14 +142,35 @@ export function ApprovalQueue() {
     }
   };
 
-  // Stats
-  const stats = {
-    total: pendingApprovals?.length ?? 0,
-    pr: pendingApprovals?.filter((a) => a.entityType === "pr").length ?? 0,
-    po: pendingApprovals?.filter((a) => a.entityType === "po").length ?? 0,
-    invoice: pendingApprovals?.filter((a) => a.entityType === "invoice").length ?? 0,
-    urgent: pendingApprovals?.filter((a) => a.escalationLevel === "urgent").length ?? 0,
-  };
+  // Stats for compact bar
+  const stats = [
+    {
+      label: "Total",
+      value: pendingApprovals?.length ?? 0,
+      filter: "all",
+      variant: "default" as const,
+    },
+    {
+      label: "PRs",
+      value: pendingApprovals?.filter((a) => a.entityType === "pr").length ?? 0,
+      filter: "pr",
+    },
+    {
+      label: "POs",
+      value: pendingApprovals?.filter((a) => a.entityType === "po").length ?? 0,
+      filter: "po",
+    },
+    {
+      label: "Invoices",
+      value: pendingApprovals?.filter((a) => a.entityType === "invoice").length ?? 0,
+      filter: "invoice",
+    },
+    {
+      label: "Urgent",
+      value: pendingApprovals?.filter((a) => a.escalationLevel === "urgent").length ?? 0,
+      variant: "action" as const,
+    },
+  ];
 
   const entityOptions = [
     { value: "all", label: "All Types" },
@@ -128,62 +180,15 @@ export function ApprovalQueue() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-5 gap-4">
-        <button
-          onClick={() => setEntityFilter("all")}
-          className={`p-4 rounded-lg border text-left transition-all ${
-            entityFilter === "all"
-              ? "border-stark-navy ring-2 ring-stark-navy/20"
-              : "border-gray-200 hover:border-gray-300"
-          }`}
-        >
-          <div className="text-sm text-gray-500">Total Pending</div>
-          <div className="text-2xl font-bold text-stark-navy">{stats.total}</div>
-        </button>
-        <button
-          onClick={() => setEntityFilter("pr")}
-          className={`p-4 rounded-lg border text-left transition-all ${
-            entityFilter === "pr"
-              ? "border-stark-navy ring-2 ring-stark-navy/20"
-              : "border-gray-200 hover:border-gray-300"
-          }`}
-        >
-          <div className="text-sm text-gray-500">PRs</div>
-          <div className="text-2xl font-bold text-stark-navy">{stats.pr}</div>
-        </button>
-        <button
-          onClick={() => setEntityFilter("po")}
-          className={`p-4 rounded-lg border text-left transition-all ${
-            entityFilter === "po"
-              ? "border-stark-navy ring-2 ring-stark-navy/20"
-              : "border-gray-200 hover:border-gray-300"
-          }`}
-        >
-          <div className="text-sm text-gray-500">POs</div>
-          <div className="text-2xl font-bold text-stark-navy">{stats.po}</div>
-        </button>
-        <button
-          onClick={() => setEntityFilter("invoice")}
-          className={`p-4 rounded-lg border text-left transition-all ${
-            entityFilter === "invoice"
-              ? "border-stark-navy ring-2 ring-stark-navy/20"
-              : "border-gray-200 hover:border-gray-300"
-          }`}
-        >
-          <div className="text-sm text-gray-500">Invoices</div>
-          <div className="text-2xl font-bold text-stark-navy">{stats.invoice}</div>
-        </button>
-        <div className="p-4 rounded-lg border border-stark-orange/30 bg-stark-orange-10">
-          <div className="text-sm text-stark-navy">Urgent</div>
-          <div className="text-2xl font-bold text-stark-orange">{stats.urgent}</div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex items-center gap-4">
+    <div className="space-y-4">
+      {/* Compact Stats + Filters */}
+      <div className="bg-white rounded-lg border border-gray-200 p-3">
+        <div className="flex items-center gap-3">
+          <CompactStats
+            stats={stats}
+            activeFilter={entityFilter}
+            onFilterChange={(f) => setEntityFilter(f as typeof entityFilter)}
+          />
           <div className="flex-1">
             <SearchInput
               value={search}
@@ -191,106 +196,89 @@ export function ApprovalQueue() {
               placeholder="Search approvals..."
             />
           </div>
-          <Select
-            options={entityOptions}
-            value={entityFilter}
-            onChange={(e) => setEntityFilter(e.target.value as typeof entityFilter)}
-            className="w-44"
-          />
           <Link href="/approvals/history">
             <Button variant="outline" size="sm">
-              View History
+              History
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Approval Cards */}
-      <div className="space-y-4">
-        {sortedApprovals.length === 0 ? (
+      {/* Grouped Approvals */}
+      <div className="space-y-3">
+        {filteredApprovals.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
             {search || entityFilter !== "all"
               ? "No approvals match your filters"
               : "No pending approvals"}
           </div>
         ) : (
-          sortedApprovals.map((approval) => {
-            const entity = getEntity(approval.entityType, approval.entityId);
+          escalationOrder.map((level) => {
+            const approvals = groupedApprovals[level];
+            if (approvals.length === 0) return null;
+
             return (
-              <div
-                key={approval.id}
-                className={`bg-white rounded-lg border p-4 ${getEscalationCardClass(approval.escalationLevel)}`}
+              <CollapsibleSection
+                key={level}
+                title={escalationLabels[level]}
+                count={approvals.length}
+                defaultExpanded={shouldExpandByDefault(level)}
+                escalationLevel={level}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <EscalationIndicator level={approval.escalationLevel} />
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded uppercase ${getEntityTypeBadge(
-                          approval.entityType
-                        )}`}
-                      >
-                        {approval.entityType}
-                      </span>
-                      {entity && (
-                        <Link
-                          href={entity.href}
-                          className="text-lg font-semibold text-stark-navy hover:underline"
-                        >
-                          {entity.number}
-                        </Link>
-                      )}
-                      <EscalationBadge level={approval.escalationLevel} />
-                    </div>
-
-                    <div className="grid grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Requested By:</span>{" "}
-                        <span className="font-medium">{approval.requestedByName}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Requested:</span>{" "}
-                        <span className="font-medium">{formatDate(approval.requestedAt)}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Amount:</span>{" "}
-                        <span className="font-bold text-stark-navy">
-                          {formatCurrency(approval.amount, approval.currency)}
+                {approvals.map((approval) => {
+                  const entity = getEntity(approval.entityType, approval.entityId);
+                  return (
+                    <div
+                      key={approval.id}
+                      className="flex items-center justify-between p-3 hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <EscalationIndicator level={approval.escalationLevel} />
+                        <div className="flex items-center gap-2 px-2 py-1 bg-gray-100 rounded text-xs font-medium text-stark-navy">
+                          <EntityIcon type={approval.entityType} />
+                          <span className="uppercase">{approval.entityType}</span>
+                        </div>
+                        {entity && (
+                          <Link
+                            href={entity.href}
+                            className="font-semibold text-stark-navy hover:underline"
+                          >
+                            {entity.number}
+                          </Link>
+                        )}
+                        <span className="text-sm text-gray-500 truncate">
+                          {approval.requestedByName}
                         </span>
                       </div>
-                      <div>
-                        <span className="text-gray-500">Threshold:</span>{" "}
-                        <span className="font-medium">
-                          {formatCurrency(approval.threshold, approval.currency)}
+
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="font-semibold text-stark-navy">
+                            {formatCurrency(approval.amount, approval.currency)}
+                          </div>
+                          {approval.amount > approval.threshold && (
+                            <div className="flex items-center gap-1 text-xs text-stark-orange">
+                              <WarningIcon size={12} />
+                              <span>+{formatCurrency(approval.amount - approval.threshold, approval.currency)}</span>
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-400 w-16">
+                          {formatDate(approval.requestedAt)}
                         </span>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => handleApprove(approval.id)}>
+                            Approve
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleReject(approval.id)}>
+                            Reject
+                          </Button>
+                        </div>
                       </div>
                     </div>
-
-                    {approval.amount > approval.threshold && (
-                      <div className="mt-2 text-sm text-stark-orange">
-                        ⚠️ Amount exceeds threshold by{" "}
-                        {formatCurrency(approval.amount - approval.threshold, approval.currency)}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-2 ml-4">
-                    <Button size="sm" onClick={() => handleApprove(approval.id)}>
-                      Approve
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleReject(approval.id)}>
-                      Reject
-                    </Button>
-                    {entity && (
-                      <Link href={entity.href}>
-                        <Button variant="ghost" size="sm" className="w-full">
-                          View Details
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </div>
+                  );
+                })}
+              </CollapsibleSection>
             );
           })
         )}
