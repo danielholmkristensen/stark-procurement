@@ -100,16 +100,9 @@ export function PRIngestionMonitor() {
     }).format(value);
   }
 
-  // Get status color - STARK Design: Green for success, Orange for action/attention
+  // Design System: All text in navy - status conveyed via dots/badges only
   const getStatusColor = (status: "online" | "offline" | "toggle-off") => {
-    switch (status) {
-      case "online":
-        return "text-green-700";
-      case "offline":
-        return "text-stark-orange";
-      case "toggle-off":
-        return "text-stark-navy";
-    }
+    return "text-stark-navy";
   };
 
   // Get status label
@@ -219,7 +212,10 @@ export function PRIngestionMonitor() {
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h4 className="text-sm font-medium text-gray-500 mb-1">Success Rate</h4>
-          <p className="text-2xl font-bold text-green-600">100%</p>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0" />
+            <span className="text-2xl font-bold text-stark-navy">100%</span>
+          </div>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h4 className="text-sm font-medium text-gray-500 mb-1">Avg Processing Time</h4>

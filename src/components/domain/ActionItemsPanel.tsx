@@ -1,304 +1,245 @@
 /**
  * Handle Now Queue
  *
- * Shows exceptions requiring human judgment with specific actions.
- * Each item has named problem type and inline action buttons.
+ * Collapsed by default with elegant attention indicator.
+ * Visual weight scales with urgency level.
+ *
+ * Escalation:
+ * - None: Green dot, calm
+ * - Has items: Orange left accent
+ * - Critical: Orange border + pulsing + tinted background
  */
 
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  XCircle,
-  DollarSign,
-  Package,
-  Clock,
-  FileText,
-  ClipboardList,
-  Receipt,
-} from "lucide-react";
-import { usePurchaseRequests, usePurchaseOrders, useInvoices } from "@/hooks";
-import { Card, CardHeader, CardTitle, Button } from "@/components/ui";
+import { ChevronDown } from "lucide-react";
+import { usePurchaseOrders, useInvoices } from "@/hooks";
+import { Button } from "@/components/ui";
 
-type ExceptionType =
-  | "supplier_rejection"
-  | "price_increase"
-  | "quantity_partial"
-  | "delivery_delay"
-  | "invoice_discrepancy"
-  | "overdue_po";
+type Urgency = "critical" | "high" | "medium";
 
-interface HandleNowItem {
+interface ActionItem {
   id: string;
-  type: ExceptionType;
-  entityType: "pr" | "po" | "invoice";
-  entityId: string;
-  title: string;
-  description: string;
-  impact?: string;
-  urgency: "critical" | "high" | "medium";
-  actions: Array<{
-    label: string;
-    href?: string;
-    variant?: "action" | "primary" | "outline";
-  }>;
+  label: string;
+  ref: string;
+  supplier: string;
+  detail: string;
+  urgency: Urgency;
+  href: string;
+  action: string;
 }
 
-const exceptionConfig: Record<
-  ExceptionType,
-  { icon: typeof XCircle; label: string; color: string }
-> = {
-  supplier_rejection: {
-    icon: XCircle,
-    label: "Supplier rejection",
-    color: "text-red-600",
-  },
-  price_increase: {
-    icon: DollarSign,
-    label: "Price increase",
-    color: "text-stark-orange",
-  },
-  quantity_partial: {
-    icon: Package,
-    label: "Quantity partial",
-    color: "text-amber-600",
-  },
-  delivery_delay: {
-    icon: Clock,
-    label: "Delivery delay",
-    color: "text-amber-600",
-  },
-  invoice_discrepancy: {
-    icon: Receipt,
-    label: "Invoice discrepancy",
-    color: "text-stark-orange",
-  },
-  overdue_po: {
-    icon: Clock,
-    label: "Overdue",
-    color: "text-red-600",
-  },
-};
-
 export function ActionItemsPanel() {
-  const allPRs = usePurchaseRequests();
+  const [isExpanded, setIsExpanded] = useState(false);
   const allPOs = usePurchaseOrders();
   const allInvoices = useInvoices();
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("da-DK", {
-      style: "currency",
-      currency: "DKK",
-      minimumFractionDigits: 0,
-    }).format(value);
+  const formatK = (v: number) => v >= 1000 ? `${Math.round(v / 1000)}K` : v.toString();
 
-  const handleNowItems = useMemo(() => {
-    const items: HandleNowItem[] = [];
+  const items = useMemo(() => {
+    const result: ActionItem[] = [];
     const now = new Date();
 
-    // POs with issues
+    // Overdue POs
     (allPOs || []).forEach((po) => {
-      // Overdue POs (sent but not confirmed, delivery date passed)
-      if (
-        po.status === "sent" &&
-        !po.confirmedAt &&
-        po.requestedDeliveryDate
-      ) {
-        const deliveryDate = new Date(po.requestedDeliveryDate);
-        if (deliveryDate < now) {
-          items.push({
-            id: `po-overdue-${po.id}`,
-            type: "overdue_po",
-            entityType: "po",
-            entityId: po.id,
-            title: po.poNumber,
-            description: `${po.supplierName} • No confirmation`,
-            impact: formatCurrency(po.total),
+      if (po.status === "sent" && !po.confirmedAt && po.requestedDeliveryDate) {
+        if (new Date(po.requestedDeliveryDate) < now) {
+          result.push({
+            id: `po-${po.id}`,
+            label: "Overdue",
+            ref: po.poNumber,
+            supplier: po.supplierName,
+            detail: `${formatK(po.total)} kr`,
             urgency: "critical",
-            actions: [
-              { label: "Contact Supplier", href: `/pos/${po.id}`, variant: "action" },
-              { label: "Find Alternative", href: `/suppliers`, variant: "outline" },
-            ],
+            href: `/pos/${po.id}`,
+            action: "Contact",
           });
         }
       }
 
-      // Confirmed but with delivery delay
-      if (
-        po.confirmedDeliveryDate &&
-        po.requestedDeliveryDate &&
-        po.status !== "received" &&
-        po.status !== "completed"
-      ) {
-        const confirmed = new Date(po.confirmedDeliveryDate);
-        const requested = new Date(po.requestedDeliveryDate);
-        const delayDays = Math.ceil(
-          (confirmed.getTime() - requested.getTime()) / (1000 * 60 * 60 * 24)
+      // Delays
+      if (po.confirmedDeliveryDate && po.requestedDeliveryDate &&
+          !["received", "completed"].includes(po.status)) {
+        const days = Math.ceil(
+          (new Date(po.confirmedDeliveryDate).getTime() - new Date(po.requestedDeliveryDate).getTime()) /
+          (1000 * 60 * 60 * 24)
         );
-
-        if (delayDays > 0) {
-          items.push({
-            id: `po-delay-${po.id}`,
-            type: "delivery_delay",
-            entityType: "po",
-            entityId: po.id,
-            title: po.poNumber,
-            description: `${po.supplierName} • ${delayDays}d delayed`,
-            impact: `Need by ${requested.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`,
-            urgency: delayDays > 3 ? "critical" : "high",
-            actions: [
-              { label: "Notify Store", href: `/pos/${po.id}`, variant: "action" },
-              { label: "Accept Delay", href: `/pos/${po.id}`, variant: "outline" },
-            ],
+        if (days > 0) {
+          result.push({
+            id: `delay-${po.id}`,
+            label: "Delay",
+            ref: po.poNumber,
+            supplier: po.supplierName,
+            detail: `${days}d`,
+            urgency: days > 3 ? "critical" : "high",
+            href: `/pos/${po.id}`,
+            action: "Review",
           });
         }
       }
     });
 
-    // Invoices with discrepancies
+    // Invoice issues
     (allInvoices || []).forEach((inv) => {
-      if (inv.status === "discrepancy" || inv.matchResult === "price_mismatch" || inv.matchResult === "quantity_mismatch") {
-        const isPriceMismatch = inv.matchResult === "price_mismatch";
-        const isQtyMismatch = inv.matchResult === "quantity_mismatch";
-
-        items.push({
+      const isPM = inv.matchResult === "price_mismatch";
+      const isQM = inv.matchResult === "quantity_mismatch";
+      if (inv.status === "discrepancy" || isPM || isQM) {
+        result.push({
           id: `inv-${inv.id}`,
-          type: isPriceMismatch
-            ? "price_increase"
-            : isQtyMismatch
-            ? "quantity_partial"
-            : "invoice_discrepancy",
-          entityType: "invoice",
-          entityId: inv.id,
-          title: inv.invoiceNumber,
-          description: `${inv.supplierName}`,
-          impact: inv.discrepancyAmount
-            ? `${inv.discrepancyAmount > 0 ? "+" : ""}${formatCurrency(inv.discrepancyAmount)} variance`
-            : formatCurrency(inv.total),
+          label: isPM ? "Price" : isQM ? "Qty" : "Match",
+          ref: inv.invoiceNumber,
+          supplier: inv.supplierName,
+          detail: inv.discrepancyAmount
+            ? `${inv.discrepancyAmount > 0 ? "+" : ""}${formatK(Math.abs(inv.discrepancyAmount))}`
+            : "",
           urgency: Math.abs(inv.discrepancyAmount || 0) > 10000 ? "critical" : "high",
-          actions: isPriceMismatch
-            ? [
-                { label: "Accept", href: `/invoices/${inv.id}`, variant: "primary" },
-                { label: "Reject", href: `/invoices/${inv.id}`, variant: "outline" },
-                { label: "Negotiate", href: `/invoices/${inv.id}`, variant: "outline" },
-              ]
-            : [
-                { label: "Review", href: `/invoices/${inv.id}`, variant: "action" },
-                { label: "Resolve", href: `/invoices/${inv.id}`, variant: "outline" },
-              ],
+          href: `/invoices/${inv.id}`,
+          action: isPM ? "Accept" : "Review",
         });
       }
     });
 
-    // Sort by urgency (critical first)
-    const urgencyOrder = { critical: 0, high: 1, medium: 2 };
-    items.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
+    const order: Record<Urgency, number> = { critical: 0, high: 1, medium: 2 };
+    return result.sort((a, b) => order[a.urgency] - order[b.urgency]);
+  }, [allPOs, allInvoices]);
 
-    return items;
-  }, [allPRs, allPOs, allInvoices]);
+  // Highest urgency level
+  const highestUrgency: Urgency | "none" = items.length === 0
+    ? "none"
+    : items[0].urgency;
 
-  if (handleNowItems.length === 0) {
+  const hasCritical = highestUrgency === "critical";
+  const hasItems = items.length > 0;
+
+  // All clear state - minimal
+  if (!hasItems) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Handle Now</CardTitle>
-        </CardHeader>
-        <div className="px-5 py-8 text-center text-gray-400">
-          <div className="flex justify-center mb-2">
-            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </div>
-          </div>
-          All caught up! No exceptions requiring your attention.
-        </div>
-      </Card>
+      <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+        <span className="text-sm text-gray-500">No exceptions</span>
+      </div>
     );
   }
 
-  // Group by urgency
-  const criticalItems = handleNowItems.filter((i) => i.urgency === "critical");
-  const highItems = handleNowItems.filter((i) => i.urgency === "high");
+  // Container styling based on urgency
+  const containerStyle = hasCritical
+    ? "bg-stark-orange/5 border-stark-orange/30 border-l-4 border-l-stark-orange"
+    : "bg-white border-gray-200 border-l-4 border-l-stark-orange/60";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Handle Now</CardTitle>
-        <span className="px-2 py-0.5 text-xs font-medium bg-stark-orange-10 text-stark-orange rounded">
-          {handleNowItems.length}
+    <div className={`rounded-lg border overflow-hidden ${containerStyle}`}>
+      {/* Header - clickable */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/50 transition-colors"
+      >
+        {/* Urgency indicator */}
+        <UrgencyIndicator urgency={highestUrgency} />
+
+        {/* Count badge */}
+        <span className={`
+          text-sm font-semibold px-2 py-0.5 rounded
+          ${hasCritical
+            ? "bg-stark-orange text-white"
+            : "bg-stark-orange/20 text-stark-navy"
+          }
+        `}>
+          {items.length}
         </span>
-      </CardHeader>
-      <div className="divide-y divide-gray-100">
-        {criticalItems.map((item) => (
-          <HandleNowRow key={item.id} item={item} />
-        ))}
-        {highItems.map((item) => (
-          <HandleNowRow key={item.id} item={item} />
-        ))}
-      </div>
-    </Card>
-  );
-}
 
-function HandleNowRow({ item }: { item: HandleNowItem }) {
-  const config = exceptionConfig[item.type];
-  const Icon = config.icon;
+        {/* Label */}
+        <span className="text-sm font-medium text-stark-navy">
+          Handle Now
+        </span>
 
-  const urgencyIndicator = {
-    critical: "bg-red-100 border-l-red-500",
-    high: "bg-stark-orange-10 border-l-stark-orange",
-    medium: "bg-amber-50 border-l-amber-400",
-  }[item.urgency];
+        {/* Spacer + chevron */}
+        <ChevronDown
+          size={16}
+          className={`ml-auto text-stark-navy/60 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+        />
+      </button>
 
-  return (
-    <div
-      className={`px-4 py-3 border-l-2 ${urgencyIndicator}`}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className="flex-shrink-0 mt-0.5">
-            <Icon size={16} className={config.color} />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className={`text-xs font-medium uppercase ${config.color}`}>
-                {config.label}
+      {/* Expanded list */}
+      {isExpanded && (
+        <div className="bg-white border-t border-gray-100">
+          {items.map((item, idx) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={`
+                flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 transition-colors
+                ${idx > 0 ? "border-t border-gray-50" : ""}
+              `}
+            >
+              {/* Critical indicator */}
+              {item.urgency === "critical" && (
+                <span className="w-1.5 h-1.5 rounded-full bg-stark-orange flex-shrink-0" />
+              )}
+
+              {/* Type */}
+              <span className="text-[10px] uppercase text-gray-400 w-12 flex-shrink-0">
+                {item.label}
               </span>
-              <span className="text-sm font-medium text-gray-900">
-                {item.title}
+
+              {/* Ref */}
+              <span className="font-medium text-stark-navy flex-shrink-0">
+                {item.ref}
               </span>
-            </div>
-            <p className="text-sm text-gray-600 truncate">{item.description}</p>
-            {item.impact && (
-              <p className="text-xs text-gray-500 mt-0.5">{item.impact}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {item.actions.slice(0, 2).map((action, idx) => (
-            <Link key={idx} href={action.href || "#"}>
+
+              {/* Supplier */}
+              <span className="text-gray-500 truncate flex-1 min-w-0">
+                {item.supplier}
+              </span>
+
+              {/* Detail */}
+              {item.detail && (
+                <span className="text-xs text-gray-400 flex-shrink-0">
+                  {item.detail}
+                </span>
+              )}
+
+              {/* Action */}
               <Button
-                variant={action.variant || "primary"}
                 size="sm"
+                variant={item.urgency === "critical" ? "action" : "outline"}
+                className="text-xs px-2 py-0.5 h-auto flex-shrink-0"
               >
-                {action.label}
+                {item.action}
               </Button>
             </Link>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
+}
+
+/**
+ * Elegant urgency indicator
+ */
+function UrgencyIndicator({ urgency }: { urgency: Urgency | "none" }) {
+  if (urgency === "critical") {
+    // Pulsing orange - demands attention
+    return (
+      <span className="relative flex h-3 w-3">
+        <span className="animate-ping absolute h-full w-full rounded-full bg-stark-orange opacity-75" />
+        <span className="relative rounded-full h-3 w-3 bg-stark-orange" />
+      </span>
+    );
+  }
+
+  if (urgency === "high") {
+    // Solid orange dot
+    return <span className="w-2.5 h-2.5 rounded-full bg-stark-orange" />;
+  }
+
+  if (urgency === "medium") {
+    // Subtle
+    return <span className="w-2 h-2 rounded-full bg-stark-navy/30" />;
+  }
+
+  // None - green
+  return <span className="w-2 h-2 rounded-full bg-green-500" />;
 }

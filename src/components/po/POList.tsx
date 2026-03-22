@@ -172,40 +172,27 @@ export function POList() {
       {viewMode === "grouped" && guidanceData.readyToSend > 0 && (
         <GuidanceBanner
           variant="info"
-          icon={<Send size={20} />}
-          title={`${guidanceData.readyToSend} PO${guidanceData.readyToSend !== 1 ? "s" : ""} ready to send (${formatCurrencyShort(guidanceData.readyToSendValue)})`}
+          title={`${guidanceData.readyToSend} ready • ${formatCurrencyShort(guidanceData.readyToSendValue)}`}
           description={
             guidanceData.bundlingOpportunities.length > 0
-              ? `${guidanceData.bundlingOpportunities[0].count} POs to ${guidanceData.bundlingOpportunities[0].supplierName} could be bundled`
+              ? `${guidanceData.bundlingOpportunities[0].count} could be bundled`
               : undefined
           }
-          action={{ label: "Send All", onClick: () => {} }}
-          secondaryAction={
-            guidanceData.bundlingOpportunities.length > 0
-              ? { label: "Review Bundle" }
-              : undefined
-          }
+          action={{ label: "Send", onClick: () => {} }}
         />
       )}
 
       {/* Delivery Risk Banner */}
       {viewMode === "grouped" && (guidanceData.deliveryRisk > 0 || guidanceData.overdue > 0) && (
         <GuidanceBanner
-          variant="warning"
-          icon={<Clock size={20} />}
+          variant="action"
           title={
             guidanceData.overdue > 0
-              ? `${guidanceData.overdue} PO${guidanceData.overdue !== 1 ? "s" : ""} overdue`
-              : `${guidanceData.deliveryRisk} PO${guidanceData.deliveryRisk !== 1 ? "s" : ""} with delivery in next 48h`
+              ? `${guidanceData.overdue} overdue`
+              : `${guidanceData.deliveryRisk} at risk`
           }
-          description={
-            guidanceData.overdue > 0 && guidanceData.deliveryRisk > 0
-              ? `Plus ${guidanceData.deliveryRisk} at risk in next 48 hours`
-              : guidanceData.deliveryRisk > 0
-              ? "Not yet confirmed by supplier"
-              : undefined
-          }
-          action={{ label: "Review Risk", href: "#delivery-risk" }}
+          description={guidanceData.overdue > 0 && guidanceData.deliveryRisk > 0 ? `${guidanceData.deliveryRisk} more at risk` : undefined}
+          action={{ label: "Review", href: "#delivery-risk" }}
         />
       )}
 

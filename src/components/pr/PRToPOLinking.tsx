@@ -135,7 +135,10 @@ export function PRToPOLinking() {
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h4 className="text-sm font-medium text-gray-500 mb-1">Linked to PO</h4>
-          <p className="text-2xl font-bold text-green-600">{linkedCount}</p>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0" />
+            <span className="text-2xl font-bold text-stark-navy">{linkedCount}</span>
+          </div>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h4 className="text-sm font-medium text-gray-500 mb-1">Bundled</h4>

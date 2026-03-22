@@ -211,28 +211,21 @@ export function InvoiceList() {
 
   return (
     <div className="space-y-4">
-      {/* Financial Impact Banner */}
+      {/* Subtle guidance banners */}
       {viewMode === "grouped" && guidanceData.discrepancyCount > 0 && (
         <GuidanceBanner
           variant="action"
-          icon={<AlertTriangle size={20} />}
-          title={`${formatCurrencyShort(guidanceData.totalDiscrepancyAmount)} in discrepancies across ${guidanceData.discrepancyCount} invoice${guidanceData.discrepancyCount !== 1 ? "s" : ""}`}
-          description={
-            guidanceData.qtyMismatches > 0 || guidanceData.priceMismatches > 0
-              ? `${guidanceData.qtyMismatches} quantity mismatch${guidanceData.qtyMismatches !== 1 ? "es" : ""} • ${guidanceData.priceMismatches} price variance${guidanceData.priceMismatches !== 1 ? "s" : ""}`
-              : undefined
-          }
-          action={{ label: "Resolve Now", href: "/invoices/discrepancies" }}
+          title={`${guidanceData.discrepancyCount} discrepancies • ${formatCurrencyShort(guidanceData.totalDiscrepancyAmount)}`}
+          description={`${guidanceData.qtyMismatches} qty • ${guidanceData.priceMismatches} price`}
+          action={{ label: "Resolve", href: "/invoices/discrepancies" }}
         />
       )}
 
-      {/* Pattern Detection Banner */}
       {viewMode === "grouped" && guidanceData.patterns.length > 0 && (
         <GuidanceBanner
-          variant="warning"
-          icon={<TrendingUp size={20} />}
-          title="Pattern Detected"
-          description={`${guidanceData.patterns[0].name}: ${guidanceData.patterns[0].count} discrepancies this month — Consider reviewing contract pricing or escalating to supplier`}
+          variant="insight"
+          title={`Pattern: ${guidanceData.patterns[0].name}`}
+          description={`${guidanceData.patterns[0].count} discrepancies this month`}
         />
       )}
 
@@ -277,22 +270,36 @@ export function InvoiceList() {
             </div>
           </div>
 
-          {/* Compact Stats */}
-          <div className="flex flex-wrap gap-2 text-xs">
-            {stats.map((stat) => (
-              <span
-                key={stat.label}
-                className={`px-2 py-1 rounded font-medium ${
-                  stat.variant === "action"
-                    ? "bg-stark-orange-10 text-stark-orange"
-                    : stat.variant === "success"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                {stat.value} {stat.label}
-              </span>
-            ))}
+          {/* Elegant stats - all navy-based */}
+          <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              {stats.map((stat) => (
+                <span
+                  key={stat.label}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded ${
+                    stat.variant === "action"
+                      ? "bg-gray-100 border-l-2 border-l-stark-orange"
+                      : stat.variant === "success"
+                      ? "bg-gray-100"
+                      : "bg-gray-100"
+                  }`}
+                >
+                  {stat.variant === "success" && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  )}
+                  <span className="font-medium text-stark-navy">{stat.value}</span>
+                  <span className="text-gray-500">{stat.label}</span>
+                </span>
+              ))}
+            </div>
+
+            {/* Time filter - subtle buttons */}
+            <div className="flex items-center gap-1 ml-auto border-l border-gray-200 pl-4">
+              <span className="text-gray-400 mr-1">Due:</span>
+              <button className="px-2 py-0.5 text-stark-navy hover:bg-gray-100 rounded">Today</button>
+              <button className="px-2 py-0.5 text-gray-500 hover:bg-gray-100 rounded">Tomorrow</button>
+              <button className="px-2 py-0.5 text-gray-500 hover:bg-gray-100 rounded">Week</button>
+            </div>
           </div>
         </div>
 
@@ -329,8 +336,8 @@ export function InvoiceList() {
                   <div className="text-xs text-gray-500 px-3 py-1 bg-gray-50 border-b border-gray-100">
                     {confidenceDescriptions[confidence]}
                     {discrepancyValue > 0 && confidence !== "auto_approve" && (
-                      <span className="ml-2 text-stark-orange font-medium">
-                        {formatCurrencyShort(discrepancyValue)} variance
+                      <span className="ml-2 text-stark-navy font-medium">
+                        • {formatCurrencyShort(discrepancyValue)} variance
                       </span>
                     )}
                   </div>
@@ -418,12 +425,10 @@ function InvoiceRow({
           <div className="font-medium text-gray-900 group-hover:underline">
             {invoice.invoiceNumber}
           </div>
-          <div className="text-xs text-gray-500 truncate flex items-center gap-2">
+          <div className="text-xs text-gray-500 truncate">
             {invoice.supplierName}
             {isAging && (
-              <span className="text-amber-600">
-                • {daysSinceReceived}d old
-              </span>
+              <span className="text-gray-400"> • {daysSinceReceived}d</span>
             )}
           </div>
         </div>
@@ -444,7 +449,7 @@ function InvoiceRow({
           </span>
         )}
         {invoice.discrepancyAmount && invoice.discrepancyAmount !== 0 && (
-          <span className="text-xs text-stark-orange font-medium w-20 text-right">
+          <span className="text-xs text-stark-navy font-medium w-20 text-right">
             {invoice.discrepancyAmount > 0 ? "+" : ""}{formatCurrency(invoice.discrepancyAmount, invoice.currency)}
           </span>
         )}

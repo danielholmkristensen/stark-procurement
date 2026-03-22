@@ -1,130 +1,109 @@
 /**
  * Guidance Banner
  *
- * Dynamic, actionable guidance text for list pages.
- * Tells the buyer what to do, not just what exists.
+ * Subtle, elegant notifications that guide without demanding.
+ *
+ * Design: Navy-based with minimal accents. Dismissible.
+ * Escalation through left border, not colored text.
  */
 
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, TrendingUp, Clock, Package, FileText, CheckCircle, Info } from "lucide-react";
+import { X, ChevronRight } from "lucide-react";
 import { Button } from "./Button";
 
-type BannerVariant = "action" | "warning" | "info" | "success";
+type BannerVariant = "action" | "insight" | "info" | "success";
 
 interface GuidanceBannerProps {
-  variant: BannerVariant;
+  variant?: BannerVariant;
   icon?: React.ReactNode;
   title: string;
   description?: string;
-  stats?: Array<{ label: string; value: string | number }>;
   action?: {
     label: string;
     href?: string;
     onClick?: () => void;
   };
-  secondaryAction?: {
-    label: string;
-    href?: string;
-    onClick?: () => void;
-  };
+  dismissible?: boolean;
+  onDismiss?: () => void;
 }
 
-const variantStyles: Record<BannerVariant, { container: string; icon: string; title: string }> = {
-  action: {
-    container: "bg-stark-orange-10 border-stark-orange/30",
-    icon: "text-stark-orange",
-    title: "text-stark-orange",
-  },
-  warning: {
-    container: "bg-amber-50 border-amber-200",
-    icon: "text-amber-600",
-    title: "text-amber-800",
-  },
-  info: {
-    container: "bg-gray-50 border-gray-200",
-    icon: "text-gray-500",
-    title: "text-gray-700",
-  },
-  success: {
-    container: "bg-green-50 border-green-200",
-    icon: "text-green-600",
-    title: "text-green-800",
-  },
-};
-
-const defaultIcons: Record<BannerVariant, React.ReactNode> = {
-  action: <AlertTriangle size={20} />,
-  warning: <Clock size={20} />,
-  info: <Info size={20} />,
-  success: <CheckCircle size={20} />,
-};
-
 export function GuidanceBanner({
-  variant,
+  variant = "info",
   icon,
   title,
   description,
-  stats,
   action,
-  secondaryAction,
+  dismissible = true,
+  onDismiss,
 }: GuidanceBannerProps) {
-  const styles = variantStyles[variant];
-  const displayIcon = icon ?? defaultIcons[variant];
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  if (isDismissed) return null;
+
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    onDismiss?.();
+  };
+
+  // Elegant escalation through left border only
+  const borderStyle = {
+    action: "border-l-2 border-l-stark-orange",
+    insight: "border-l-2 border-l-stark-navy/40",
+    info: "border-l-2 border-l-gray-300",
+    success: "border-l-2 border-l-green-500",
+  }[variant];
 
   return (
-    <div className={`rounded-lg border p-4 mb-4 ${styles.container}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className={`flex-shrink-0 mt-0.5 ${styles.icon}`}>
-            {displayIcon}
+    <div className={`bg-white rounded-lg border border-gray-200 ${borderStyle} mb-3`}>
+      <div className="flex items-center gap-3 px-4 py-2.5">
+        {/* Icon - subtle navy */}
+        {icon && (
+          <div className="flex-shrink-0 text-stark-navy/60">
+            {icon}
           </div>
-          <div>
-            <p className={`font-semibold ${styles.title}`}>{title}</p>
-            {description && (
-              <p className="text-sm text-gray-600 mt-0.5">{description}</p>
-            )}
-            {stats && stats.length > 0 && (
-              <div className="flex flex-wrap gap-3 mt-2">
-                {stats.map((stat, i) => (
-                  <span key={i} className="text-sm text-gray-500">
-                    <span className="font-medium text-gray-700">{stat.value}</span> {stat.label}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+        )}
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-stark-navy">{title}</p>
+          {description && (
+            <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+          )}
         </div>
-        {(action || secondaryAction) && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {secondaryAction && (
-              secondaryAction.href ? (
-                <Link href={secondaryAction.href}>
-                  <Button variant="outline" size="sm">
-                    {secondaryAction.label}
-                  </Button>
-                </Link>
-              ) : (
-                <Button variant="outline" size="sm" onClick={secondaryAction.onClick}>
-                  {secondaryAction.label}
-                </Button>
-              )
-            )}
-            {action && (
-              action.href ? (
-                <Link href={action.href}>
-                  <Button variant={variant === "action" ? "action" : "primary"} size="sm">
-                    {action.label}
-                  </Button>
-                </Link>
-              ) : (
-                <Button variant={variant === "action" ? "action" : "primary"} size="sm" onClick={action.onClick}>
-                  {action.label}
-                </Button>
-              )
-            )}
-          </div>
+
+        {/* Action - subtle link style, not loud button */}
+        {action && (
+          action.href ? (
+            <Link
+              href={action.href}
+              className="flex items-center gap-1 text-xs font-medium text-stark-navy hover:underline flex-shrink-0"
+            >
+              {action.label}
+              <ChevronRight size={12} />
+            </Link>
+          ) : (
+            <button
+              onClick={action.onClick}
+              className="flex items-center gap-1 text-xs font-medium text-stark-navy hover:underline flex-shrink-0"
+            >
+              {action.label}
+              <ChevronRight size={12} />
+            </button>
+          )
+        )}
+
+        {/* Dismiss */}
+        {dismissible && (
+          <button
+            onClick={handleDismiss}
+            className="p-1 text-gray-400 hover:text-gray-600 flex-shrink-0"
+            title="Dismiss"
+          >
+            <X size={14} />
+          </button>
         )}
       </div>
     </div>
@@ -132,9 +111,7 @@ export function GuidanceBanner({
 }
 
 /**
- * Section Summary Banner
- *
- * Inline summary for expanded sections showing totals and context.
+ * Section Summary - Inline stats bar
  */
 interface SectionSummaryProps {
   totalValue?: number;
@@ -159,20 +136,21 @@ export function SectionSummary({
     }).format(value);
 
   return (
-    <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-xs text-gray-500 flex items-center gap-4">
+    <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-100 text-xs text-gray-500 flex items-center gap-4">
       {totalValue !== undefined && (
         <span>
-          <span className="font-medium text-gray-700">{formatCurrency(totalValue)}</span> total
+          <span className="font-medium text-stark-navy">{formatCurrency(totalValue)}</span> total
         </span>
       )}
       {oldestWaiting && (
         <span>
-          Oldest: <span className="font-medium text-gray-700">{oldestWaiting}</span>
+          Oldest: <span className="font-medium text-stark-navy">{oldestWaiting}</span>
         </span>
       )}
       {urgentCount !== undefined && urgentCount > 0 && (
-        <span className="text-stark-orange">
-          <span className="font-medium">{urgentCount}</span> urgent
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-stark-orange" />
+          <span className="font-medium text-stark-navy">{urgentCount}</span> urgent
         </span>
       )}
     </div>

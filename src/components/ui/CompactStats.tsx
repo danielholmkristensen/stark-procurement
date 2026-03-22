@@ -20,26 +20,31 @@ interface CompactStatsProps {
   onFilterChange?: (filter: string) => void;
 }
 
+// Design System: All values in navy, success indicated by green dot
 const variantStyles = {
   default: {
     value: "text-stark-navy",
     bg: "hover:bg-gray-50",
     active: "bg-stark-navy-10 ring-1 ring-stark-navy/20",
+    showDot: false,
   },
   success: {
-    value: "text-green-600",
-    bg: "hover:bg-green-50",
-    active: "bg-green-50 ring-1 ring-green-500/20",
+    value: "text-stark-navy",
+    bg: "hover:bg-gray-50",
+    active: "bg-gray-100 ring-1 ring-gray-300/30",
+    showDot: true,
   },
   warning: {
-    value: "text-stark-orange",
-    bg: "hover:bg-stark-orange-10",
-    active: "bg-stark-orange-10 ring-1 ring-stark-orange/20",
+    value: "text-stark-navy",
+    bg: "hover:bg-gray-50",
+    active: "bg-gray-100 ring-1 ring-gray-300/30",
+    showDot: false,
   },
   action: {
-    value: "text-stark-orange font-bold",
-    bg: "hover:bg-stark-orange-10",
-    active: "bg-stark-orange-10 ring-1 ring-stark-orange/30",
+    value: "text-stark-navy font-bold",
+    bg: "hover:bg-gray-50",
+    active: "bg-gray-100 ring-1 ring-gray-300/30",
+    showDot: false,
   },
 };
 
@@ -64,6 +69,9 @@ export function CompactStats({ stats, activeFilter, onFilterChange }: CompactSta
               ${!isClickable && "opacity-90"}
             `}
           >
+            {styles.showDot && (
+              <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+            )}
             <span className={`font-semibold tabular-nums ${styles.value}`}>
               {stat.value}
             </span>
@@ -101,8 +109,13 @@ export function CompactStatsVertical({ stats, activeFilter, onFilterChange }: Co
             <span className="text-gray-600 text-xs">
               {stat.label}
             </span>
-            <span className={`font-semibold tabular-nums ${styles.value}`}>
-              {stat.value}
+            <span className="flex items-center gap-1.5">
+              {styles.showDot && (
+                <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+              )}
+              <span className={`font-semibold tabular-nums ${styles.value}`}>
+                {stat.value}
+              </span>
             </span>
           </button>
         );

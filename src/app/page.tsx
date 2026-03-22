@@ -24,16 +24,16 @@ export default function DashboardPage() {
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* PO Pipeline - spans 2 columns */}
-            <div className="lg:col-span-2">
+            {/* Left Column: PO Pipeline + Activity */}
+            <div className="lg:col-span-2 space-y-6">
               <POPipeline />
+              <ActivityFeed />
             </div>
 
-            {/* Right Column: Queue + Automation + Activity */}
+            {/* Right Column: Queue + Automation */}
             <div className="space-y-6">
               <MyWorkload />
               <AutomationReport />
-              <ActivityFeed />
             </div>
           </div>
         </div>

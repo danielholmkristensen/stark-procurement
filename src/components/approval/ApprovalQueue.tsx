@@ -237,34 +237,21 @@ export function ApprovalQueue() {
 
   return (
     <div className="space-y-4">
-      {/* Decision Impact Banner */}
+      {/* Subtle guidance banners */}
       {viewMode === "grouped" && guidanceData.total > 0 && (
         <GuidanceBanner
           variant={guidanceData.oldestDays > 2 ? "action" : "info"}
-          icon={<Clock size={20} />}
-          title={`${guidanceData.total} approval${guidanceData.total !== 1 ? "s" : ""} waiting (${formatCurrencyShort(guidanceData.totalValue)})`}
-          description={
-            guidanceData.blockingPOs > 0 || guidanceData.blockingPayments > 0
-              ? `${guidanceData.blockingPOs > 0 ? `${guidanceData.blockingPOs} blocking PO send` : ""}${guidanceData.blockingPOs > 0 && guidanceData.blockingPayments > 0 ? " • " : ""}${guidanceData.blockingPayments > 0 ? `${guidanceData.blockingPayments} blocking payment` : ""}${guidanceData.oldestDays > 0 ? ` • Oldest: ${guidanceData.oldestDays}d` : ""}`
-              : undefined
-          }
-          action={
-            guidanceData.batchCandidates.length > 0
-              ? { label: "Approve All Routine", onClick: () => {} }
-              : undefined
-          }
+          title={`${guidanceData.total} pending • ${formatCurrencyShort(guidanceData.totalValue)}`}
+          description={guidanceData.oldestDays > 0 ? `Oldest: ${guidanceData.oldestDays}d` : undefined}
         />
       )}
 
-      {/* Batch Action Banner */}
       {viewMode === "grouped" && guidanceData.batchCandidates.length > 0 && (
         <GuidanceBanner
-          variant="info"
-          icon={<Users size={20} />}
-          title="Quick Action Available"
-          description={`${guidanceData.batchCandidates[0].count} items from ${guidanceData.batchCandidates[0].requesterName} (${formatCurrencyShort(guidanceData.batchCandidates[0].totalValue)})`}
+          variant="insight"
+          title={`${guidanceData.batchCandidates[0].count} from ${guidanceData.batchCandidates[0].requesterName}`}
           action={{
-            label: `Approve All ${guidanceData.batchCandidates[0].count}`,
+            label: "Approve batch",
             onClick: () => {
               const approvals = filteredApprovals.filter(
                 (a) => a.requestedBy === guidanceData.batchCandidates[0].requesterId
@@ -315,13 +302,24 @@ export function ApprovalQueue() {
             </div>
           </div>
 
-          {/* Compact Stats */}
-          <div className="flex flex-wrap gap-2 text-xs">
-            {stats.map((stat) => (
-              <span key={stat.label} className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-medium">
-                {stat.value} {stat.label}
-              </span>
-            ))}
+          {/* Elegant stats - navy based */}
+          <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              {stats.map((stat) => (
+                <span key={stat.label} className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 rounded">
+                  <span className="font-medium text-stark-navy">{stat.value}</span>
+                  <span className="text-gray-500">{stat.label}</span>
+                </span>
+              ))}
+            </div>
+
+            {/* Time filter */}
+            <div className="flex items-center gap-1 ml-auto border-l border-gray-200 pl-4">
+              <span className="text-gray-400 mr-1">Age:</span>
+              <button className="px-2 py-0.5 text-stark-navy hover:bg-gray-100 rounded">Today</button>
+              <button className="px-2 py-0.5 text-gray-500 hover:bg-gray-100 rounded">&gt;1d</button>
+              <button className="px-2 py-0.5 text-gray-500 hover:bg-gray-100 rounded">&gt;3d</button>
+            </div>
           </div>
         </div>
 
@@ -329,13 +327,9 @@ export function ApprovalQueue() {
         {viewMode === "grouped" ? (
           <div className="p-4 space-y-4">
             {filteredApprovals.length === 0 ? (
-              <div className="py-8 text-center">
-                <div className="flex justify-center mb-2">
-                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                    <CheckCircle size={24} className="text-green-600" />
-                  </div>
-                </div>
-                <p className="text-gray-500">All caught up! No pending approvals.</p>
+              <div className="py-6 flex items-center justify-center gap-2 text-sm text-gray-500">
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                No pending approvals
               </div>
             ) : (
               REASON_ORDER.map((reason) => {

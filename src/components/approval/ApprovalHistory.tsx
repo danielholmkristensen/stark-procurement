@@ -143,14 +143,17 @@ export function ApprovalHistory() {
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="text-sm text-gray-500">Approved</div>
-          <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0" />
+            <span className="text-2xl font-bold text-stark-navy">{stats.approved}</span>
+          </div>
           <div className="text-xs text-gray-400">
             {stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0}% approval rate
           </div>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="text-sm text-gray-500">Rejected</div>
-          <div className="text-2xl font-bold text-stark-orange">{stats.rejected}</div>
+          <div className="text-2xl font-bold text-stark-navy">{stats.rejected}</div>
           <div className="text-xs text-gray-400">
             {stats.total > 0 ? Math.round((stats.rejected / stats.total) * 100) : 0}% rejection rate
           </div>

@@ -217,18 +217,11 @@ export function PRList({ initialSource = "all", initialStatus = "all" }: PRListP
       {viewMode === "grouped" && guidanceData.highValueCount > 0 && (
         <GuidanceBanner
           variant={guidanceData.urgentCount > 0 ? "action" : "info"}
-          icon={<AlertTriangle size={20} />}
-          title={`${guidanceData.highValueCount} high-value item${guidanceData.highValueCount !== 1 ? "s" : ""} need${guidanceData.highValueCount === 1 ? "s" : ""} your review`}
+          title={`${guidanceData.highValueCount} high-value • ${formatCurrencyShort(guidanceData.highValueTotal)}`}
           description={buildGuidanceDescription()}
-          stats={[
-            { label: "total value", value: formatCurrencyShort(guidanceData.highValueTotal) },
-            ...(guidanceData.oldestWaitingHours > 0
-              ? [{ label: "oldest waiting", value: `${guidanceData.oldestWaitingHours}h` }]
-              : []),
-          ]}
           action={
             guidanceData.urgentCount > 0
-              ? { label: "Review Now", href: "#urgent-section" }
+              ? { label: "Review", href: "#urgent-section" }
               : undefined
           }
         />

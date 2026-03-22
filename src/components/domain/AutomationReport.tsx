@@ -2,14 +2,14 @@
  * Automation Report Component
  *
  * Shows what the system handled automatically overnight.
- * Builds buyer confidence and makes exception queue feel manageable.
+ * Elegant, navy-based with subtle success indicators.
  */
 
 "use client";
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Bot, CheckCircle2, AlertCircle, ChevronRight } from "lucide-react";
+import { Bot, ChevronRight } from "lucide-react";
 import { usePurchaseRequests, usePurchaseOrders, useInvoices } from "@/hooks";
 import { Card, CardHeader, CardTitle } from "@/components/ui";
 
@@ -19,9 +19,6 @@ export function AutomationReport() {
   const allInvoices = useInvoices();
 
   const stats = useMemo(() => {
-    const now = new Date();
-    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
     // PRs processed from Relex (automated replenishment)
     const relexPRs = (allPRs || []).filter((pr) => pr.source === "relex");
     const relexProcessed = relexPRs.filter(
@@ -40,15 +37,11 @@ export function AutomationReport() {
     ).length;
 
     // Manual review required
-    const manualReviewPRs = (allPRs || []).filter(
-      (pr) => pr.source === "relex" && pr.status === "pending"
-    ).length;
-
     const manualReviewInvoices = (allInvoices || []).filter(
-      (inv) => inv.status === "discrepancy" || inv.matchResult === "quantity_mismatch" || inv.matchResult === "price_mismatch"
+      (inv) => inv.status === "discrepancy" ||
+               inv.matchResult === "quantity_mismatch" ||
+               inv.matchResult === "price_mismatch"
     ).length;
-
-    const manualReviewTotal = manualReviewPRs + manualReviewInvoices;
 
     // Calculate automation rate
     const totalProcessable = relexPRs.length + (allInvoices?.length || 0);
@@ -62,74 +55,69 @@ export function AutomationReport() {
       autoSentPOs: autoSentPOs.length,
       autoSentValue,
       autoMatchedInvoices,
-      manualReviewTotal,
+      manualReviewInvoices,
       automationRate,
     };
   }, [allPRs, allPOs, allInvoices]);
 
   const formatCurrency = (value: number) => {
-    if (value >= 1000000) return `€${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `DKK ${Math.round(value / 1000)}K`;
-    return new Intl.NumberFormat("da-DK", {
-      style: "currency",
-      currency: "DKK",
-      minimumFractionDigits: 0,
-    }).format(value);
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M kr`;
+    if (value >= 1000) return `${Math.round(value / 1000)}K kr`;
+    return `${value} kr`;
   };
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Bot size={16} className="text-stark-navy" />
-          <CardTitle>Overnight Automation</CardTitle>
+          <Bot size={14} className="text-gray-400" />
+          <CardTitle>Overnight</CardTitle>
         </div>
       </CardHeader>
-      <div className="px-5 py-4 space-y-3">
-        {/* Success items */}
-        <div className="space-y-2">
-          <AutoItem
-            icon={<CheckCircle2 size={14} className="text-green-600" />}
-            label={`${stats.relexProcessed} PRs from Relex processed`}
+      <div className="px-4 pb-4 space-y-2">
+        {/* Compact stats */}
+        <div className="space-y-1.5 text-sm">
+          <AutoLine
+            count={stats.relexProcessed}
+            label="PRs processed"
+            success
           />
-          <AutoItem
-            icon={<CheckCircle2 size={14} className="text-green-600" />}
-            label={`${stats.autoSentPOs} POs sent automatically (${formatCurrency(stats.autoSentValue)})`}
+          <AutoLine
+            count={stats.autoSentPOs}
+            label="POs sent"
+            detail={formatCurrency(stats.autoSentValue)}
+            success
           />
-          <AutoItem
-            icon={<CheckCircle2 size={14} className="text-green-600" />}
-            label={`${stats.autoMatchedInvoices} invoices auto-matched`}
+          <AutoLine
+            count={stats.autoMatchedInvoices}
+            label="invoices matched"
+            success
           />
-          {stats.manualReviewTotal > 0 && (
-            <AutoItem
-              icon={<AlertCircle size={14} className="text-amber-500" />}
-              label={`${stats.manualReviewTotal} required manual review`}
-              variant="warning"
+          {stats.manualReviewInvoices > 0 && (
+            <AutoLine
+              count={stats.manualReviewInvoices}
+              label="need review"
             />
           )}
         </div>
 
-        {/* Automation rate */}
-        <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Automation rate:</span>
-            <span className={`text-sm font-bold ${
-              stats.automationRate >= 90 ? "text-green-600" :
-              stats.automationRate >= 70 ? "text-amber-600" :
-              "text-stark-orange"
-            }`}>
-              {stats.automationRate}%
+        {/* Automation rate - subtle */}
+        <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span>Automation:</span>
+            <span className="flex items-center gap-1">
+              {stats.automationRate >= 90 && (
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              )}
+              <span className="font-medium text-stark-navy">{stats.automationRate}%</span>
             </span>
-            {stats.automationRate >= 90 && (
-              <span className="text-xs text-green-600">↑</span>
-            )}
           </div>
           <Link
             href="/activity"
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-stark-navy"
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-stark-navy"
           >
-            Full Log
-            <ChevronRight size={12} />
+            Log
+            <ChevronRight size={10} />
           </Link>
         </div>
       </div>
@@ -137,19 +125,22 @@ export function AutomationReport() {
   );
 }
 
-interface AutoItemProps {
-  icon: React.ReactNode;
+interface AutoLineProps {
+  count: number;
   label: string;
-  variant?: "success" | "warning";
+  detail?: string;
+  success?: boolean;
 }
 
-function AutoItem({ icon, label, variant = "success" }: AutoItemProps) {
+function AutoLine({ count, label, detail, success }: AutoLineProps) {
   return (
-    <div className="flex items-center gap-2">
-      {icon}
-      <span className={`text-sm ${variant === "warning" ? "text-amber-700" : "text-gray-700"}`}>
-        {label}
-      </span>
+    <div className="flex items-center gap-2 text-gray-600">
+      {success && (
+        <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+      )}
+      <span className="font-medium text-stark-navy">{count}</span>
+      <span>{label}</span>
+      {detail && <span className="text-gray-400 text-xs ml-auto">{detail}</span>}
     </div>
   );
 }

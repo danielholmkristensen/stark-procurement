@@ -181,7 +181,7 @@ export function InvoiceDiscrepancyQueue() {
                       {invoice.discrepancyAmount && (
                         <div>
                           <span className="text-sm text-gray-500">Discrepancy Amount:</span>{" "}
-                          <span className="font-bold text-stark-orange">
+                          <span className="font-semibold text-stark-navy">
                             {formatCurrency(invoice.discrepancyAmount, invoice.currency)}
                           </span>
                         </div>
@@ -238,7 +238,7 @@ export function InvoiceDiscrepancyQueue() {
             </div>
             <div className="text-sm text-gray-600">
               Total discrepancy amount:{" "}
-              <span className="font-bold text-stark-orange">
+              <span className="font-semibold text-stark-navy">
                 {formatCurrency(
                   sortedInvoices.reduce((sum, inv) => sum + (inv.discrepancyAmount ?? 0), 0),
                   "DKK"

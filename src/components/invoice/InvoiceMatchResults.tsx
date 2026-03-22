@@ -80,7 +80,10 @@ export function InvoiceMatchResults() {
         <Card>
           <CardContent className="p-4">
             <div className="text-sm text-gray-500">Full Matches</div>
-            <div className="text-3xl font-bold text-green-600">{stats.fullMatch}</div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0" />
+              <span className="text-3xl font-bold text-stark-navy">{stats.fullMatch}</span>
+            </div>
             <div className="text-xs text-gray-400">
               {stats.total > 0 ? Math.round((stats.fullMatch / stats.total) * 100) : 0}% of total
             </div>
@@ -89,7 +92,7 @@ export function InvoiceMatchResults() {
         <Card>
           <CardContent className="p-4">
             <div className="text-sm text-gray-500">Discrepancies</div>
-            <div className="text-3xl font-bold text-stark-orange">{stats.discrepancies}</div>
+            <div className="text-3xl font-bold text-stark-navy">{stats.discrepancies}</div>
             <div className="text-xs text-gray-400">
               {stats.total > 0 ? Math.round((stats.discrepancies / stats.total) * 100) : 0}% of total
             </div>
@@ -224,14 +227,13 @@ export function InvoiceMatchResults() {
                   </td>
                   <td className="px-4 py-3 text-sm text-right">
                     {invoice.matchScore !== undefined ? (
-                      <span
-                        className={`font-medium ${
-                          invoice.matchScore >= 0.9
-                            ? "text-green-700"
-                            : "text-stark-orange"
-                        }`}
-                      >
-                        {Math.round(invoice.matchScore * 100)}%
+                      <span className="flex items-center justify-end gap-1.5">
+                        {invoice.matchScore >= 0.9 && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        )}
+                        <span className="font-medium text-stark-navy">
+                          {Math.round(invoice.matchScore * 100)}%
+                        </span>
                       </span>
                     ) : (
                       <span className="text-gray-400">—</span>
