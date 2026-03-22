@@ -1,7 +1,10 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUser } from "@/context/UserContext";
+import { ChevronDown, Check } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/", badge: null },
@@ -14,6 +17,20 @@ const navigation = [
 
 export function Header() {
   const pathname = usePathname();
+  const { currentUser, setUser, users } = useUser();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <header className="bg-stark-navy sticky top-0 z-50">
@@ -53,8 +70,63 @@ export function Header() {
             <NotificationIcon />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-white rounded-full" />
           </button>
-          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-xs font-medium text-white cursor-pointer ml-1">
-            DK
+
+          {/* User Switcher */}
+          <div className="relative ml-1" ref={menuRef}>
+            <button
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              className="flex items-center gap-2 hover:bg-white/10 rounded-full pl-1 pr-2 py-1 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-medium text-white">
+                {currentUser.initials}
+              </div>
+              <div className="text-left hidden sm:block">
+                <div className="text-xs font-medium text-white leading-tight">
+                  {currentUser.name}
+                </div>
+                <div className="text-[10px] text-white/60 leading-tight">
+                  {currentUser.title}
+                </div>
+              </div>
+              <ChevronDown
+                size={14}
+                className={`text-white/60 transition-transform ${
+                  isUserMenuOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isUserMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-stark-navy border border-white/10 rounded-lg shadow-lg overflow-hidden">
+                <div className="px-3 py-2 border-b border-white/10">
+                  <span className="text-[10px] uppercase tracking-wider text-white/40">
+                    Switch User
+                  </span>
+                </div>
+                {users.map((user) => (
+                  <button
+                    key={user.id}
+                    onClick={() => {
+                      setUser(user.id);
+                      setIsUserMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-medium text-white flex-shrink-0">
+                      {user.initials}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="text-sm text-white">{user.name}</div>
+                      <div className="text-xs text-white/50">{user.title}</div>
+                    </div>
+                    {currentUser.id === user.id && (
+                      <Check size={16} className="text-green-400 flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
