@@ -13,7 +13,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import type { EscalationLevel } from "@/lib/db";
 
 interface CollapsibleSectionProps {
-  title: string;
+  title: ReactNode;
   count: number;
   children: ReactNode;
   defaultExpanded?: boolean;

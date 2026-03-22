@@ -14,4 +14,5 @@ export { CollapsibleSection, shouldExpandByDefault } from "./CollapsibleSection"
 export { CompactStats, CompactStatsVertical } from "./CompactStats";
 export { LinkageStatusBadge } from "./LinkageStatusBadge";
 export { LinkedPRsBadge } from "./LinkedPRsBadge";
+export { GuidanceBanner, SectionSummary } from "./GuidanceBanner";
 export * from "./Icon";
