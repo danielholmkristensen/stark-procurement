@@ -1,26 +1,223 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* =============================================================================
+   STARK Design System - Procurement Module
+   ============================================================================= */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* STARK Brand Colors */
+  --color-stark-navy: #001e41;
+  --color-stark-navy-80: #334a64;
+  --color-stark-navy-60: #667487;
+  --color-stark-navy-40: #99a3af;
+  --color-stark-navy-20: #ccd1d7;
+  --color-stark-navy-10: #e6eaef;
+  --color-stark-navy-5: #f3f5f7;
+  --color-stark-navy-light: #0a2d52;
+
+  --color-stark-orange: #f08b1d;
+  --color-stark-orange-hover: #d97706;
+  --color-stark-orange-10: #fef3e2;
+
+  /* Semantic Colors */
+  --color-background: #f9fafb;
+  --color-foreground: #001e41;
+  --color-card: #ffffff;
+  --color-card-foreground: #001e41;
+  --color-muted: #f3f4f6;
+  --color-muted-foreground: #6b7280;
+  --color-border: #e5e7eb;
+  --color-input: #e5e7eb;
+  --color-ring: #001e41;
+
+  /* Success/Error/Warning */
+  --color-success: #22c55e;
+  --color-success-10: #dcfce7;
+  --color-error: #ef4444;
+  --color-error-10: #fee2e2;
+  --color-warning: #f59e0b;
+  --color-warning-10: #fef3c7;
+
+  /* Scope Tags (from mockups) */
+  --color-scope-current-bg: #dcfce7;
+  --color-scope-current-text: #166534;
+  --color-scope-current-border: #86efac;
+  --color-scope-toggle-bg: #fef9c3;
+  --color-scope-toggle-text: #854d0e;
+  --color-scope-toggle-border: #fde047;
+  --color-scope-future-bg: #e0e7ff;
+  --color-scope-future-text: #3730a3;
+  --color-scope-future-border: #a5b4fc;
+
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+
+  /* Spacing */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 }
 
-@media (prefers-color-scheme: dark) {
+/* =============================================================================
+   Base Styles
+   ============================================================================= */
+
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 249 250 251;
+    --foreground: 0 30 65;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* =============================================================================
+   Escalation Hierarchy Animations
+   ============================================================================= */
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.pulse-urgent {
+  animation: pulse-urgent 2s ease-in-out infinite;
+}
+
+.pulse-live {
+  animation: pulse-live 2s ease-in-out infinite;
+}
+
+/* Live indicator ping animation */
+.live-indicator {
+  @apply relative;
+}
+
+.live-indicator::before {
+  content: '';
+  @apply absolute inset-0 rounded-full bg-green-400 animate-ping opacity-75;
+}
+
+/* =============================================================================
+   Escalation Border Patterns
+   ============================================================================= */
+
+/* Attention level - orange left border */
+.escalation-attention {
+  @apply border-l-2 border-stark-orange;
+}
+
+/* Action level - orange background button */
+.escalation-action {
+  @apply bg-stark-orange text-white hover:bg-stark-orange-hover;
+}
+
+/* =============================================================================
+   Component Utilities
+   ============================================================================= */
+
+/* KPI Card hover states */
+.kpi-card {
+  @apply bg-white rounded-xl border border-gray-200 p-5 transition-shadow;
+}
+
+.kpi-card:hover {
+  @apply shadow-sm;
+}
+
+/* Table row with attention state */
+.table-row-attention {
+  @apply border-l-4 border-stark-orange bg-stark-orange-10/30;
+}
+
+/* Progress bar styling */
+.progress-bar {
+  @apply h-1.5 bg-gray-100 rounded-full overflow-hidden;
+}
+
+.progress-bar-fill {
+  @apply h-full bg-stark-navy rounded-full transition-all duration-300;
+}
+
+/* Source badges */
+.source-badge {
+  @apply px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-stark-navy border border-gray-200;
+}
+
+/* Status badges */
+.status-badge {
+  @apply px-2 py-0.5 rounded-full text-xs font-medium;
+}
+
+.status-badge-new {
+  @apply bg-stark-navy text-white;
+}
+
+.status-badge-reviewed {
+  @apply bg-stark-navy-10 text-stark-navy;
+}
+
+.status-badge-linked {
+  @apply bg-green-100 text-green-700;
+}
+
+/* Activity feed items */
+.activity-item {
+  @apply px-5 py-3 hover:bg-gray-50 cursor-pointer transition-colors;
+}
+
+.activity-item-attention {
+  @apply border-l-2 border-stark-orange;
+}
+
+/* =============================================================================
+   Navigation Active States
+   ============================================================================= */
+
+.nav-link {
+  @apply px-4 py-4 text-sm text-white/70 hover:text-white border-b-2 border-transparent transition-colors;
+}
+
+.nav-link-active {
+  @apply text-white border-stark-orange;
+}
+
+/* =============================================================================
+   Scrollbar Styling
+   ============================================================================= */
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-stark-navy-20) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-stark-navy-20);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-stark-navy-40);
 }
