@@ -46,14 +46,15 @@
 
 ## Iteration Map
 
-| # | Title | What Gets Built |
-|:--:|-------|-----------------|
-| 01.1 | Foundation & Navigation | Router setup, page shells, navigation, IndexedDB hooks |
-| 01.2 | PR Module Complete | A1-A5 screens fully functional with data |
-| 01.3 | PO Module Complete | PO list, detail, bundling preview, send flow |
-| 01.4 | Invoice & Matching | Invoice list, detail, matching workflow |
-| 01.5 | Suppliers & Approvals | Supplier management, approval queue |
-| 01.6 | Polish & Testing | E2E tests, edge cases, performance |
+| # | Title | What Gets Built | Status |
+|:--:|-------|-----------------|--------|
+| 01.1 | Foundation & Navigation | Router setup, page shells, navigation, IndexedDB hooks | ✅ |
+| 01.2 | PR Module Complete | A1-A5 screens fully functional with data | ✅ |
+| 01.3 | PO Module Complete | PO list, detail, bundling preview, send flow | ✅ |
+| 01.4 | Invoice & Matching | Invoice list, detail, matching workflow | ✅ |
+| 01.5 | Suppliers & Approvals | Supplier management, approval queue | ✅ |
+| 01.6 | Polish & Testing | E2E tests, edge cases, performance | IN PROGRESS |
+| **01.7** | **Visual Hierarchy** | **Lindstrøm escalation indicators across all lists** | **✅** |
 
 ---
 

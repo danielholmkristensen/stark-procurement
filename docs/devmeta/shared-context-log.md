@@ -33,3 +33,60 @@
 - No page routes beyond /
 
 ---
+
+## Visual Hierarchy Implementation (2026-03-22)
+
+### EscalationIndicator Component
+
+New component at `src/components/ui/EscalationIndicator.tsx` providing:
+
+```typescript
+// Core visual hierarchy indicators
+EscalationIndicator({ level, showLabel?, size? })  // Dot indicator
+EscalationBadge({ level })                          // Badge with label
+getEscalationCardClass(level)                       // Card background class
+getEscalationBadgeClass(level)                      // Badge class
+```
+
+### Level Configuration
+
+| Level | Dot | Badge | Card |
+|-------|-----|-------|------|
+| ambient | Navy 40% | Gray | Default border |
+| awareness | Navy solid | Navy background | Default border |
+| attention | Orange 60% | Orange tint, border | Orange tint background |
+| action | Orange solid | Orange border | Orange tinted |
+| urgent | Orange + PULSE | White on orange | Orange border + background |
+
+### Integration Pattern
+
+```tsx
+// In list components:
+import { EscalationIndicator, getEscalationCardClass } from "@/components/ui";
+
+// Table row with left border tint:
+<tr className={`hover:bg-gray-50 ${getEscalationCardClass(item.escalationLevel).replace('border-', 'border-l-2 border-l-')}`}>
+  <td>
+    <div className="flex items-center gap-2">
+      <EscalationIndicator level={item.escalationLevel} />
+      {item.number}
+    </div>
+  </td>
+</tr>
+
+// Card with full background:
+<div className={`rounded-lg border p-4 ${getEscalationCardClass(item.escalationLevel)}`}>
+  <EscalationIndicator level={item.escalationLevel} />
+  <EscalationBadge level={item.escalationLevel} />
+</div>
+```
+
+### Applied To
+
+- PRList.tsx — Row with dot + left border
+- POList.tsx — Row with dot + left border
+- InvoiceList.tsx — Row with dot + left border
+- ApprovalQueue.tsx — Card with dot + badge + background
+- InvoiceDiscrepancyQueue.tsx — Card with dot + badge + background
+
+---

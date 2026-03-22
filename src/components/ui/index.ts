@@ -3,6 +3,7 @@ export { Card, CardHeader, CardTitle, CardContent } from "./Card";
 export { KPICard } from "./KPICard";
 export { Button } from "./Button";
 export { LiveIndicator, StatusIndicator } from "./LiveIndicator";
+export { EscalationIndicator, EscalationBadge, getEscalationCardClass, getEscalationBadgeClass } from "./EscalationIndicator";
 export { Input } from "./Input";
 export { Select } from "./Select";
 export { Textarea } from "./Textarea";

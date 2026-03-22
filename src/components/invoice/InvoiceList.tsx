@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useInvoices, useSuppliers } from "@/hooks";
-import { Button, SearchInput, Select, StatusBadge } from "@/components/ui";
+import { Button, SearchInput, Select, StatusBadge, EscalationIndicator, getEscalationCardClass } from "@/components/ui";
 import type { InvoiceStatus, MatchResult } from "@/lib/db";
 
 interface InvoiceListProps {
@@ -226,15 +226,18 @@ export function InvoiceList({
             {paginatedInvoices.map((invoice) => (
               <tr
                 key={invoice.id}
-                className="hover:bg-gray-50"
+                className={`hover:bg-gray-50 ${getEscalationCardClass(invoice.escalationLevel).replace('border-', 'border-l-2 border-l-')}`}
               >
                 <td className="px-4 py-3">
-                  <Link
-                    href={`/invoices/${invoice.id}`}
-                    className="font-medium text-stark-navy hover:underline"
-                  >
-                    {invoice.invoiceNumber}
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <EscalationIndicator level={invoice.escalationLevel} />
+                    <Link
+                      href={`/invoices/${invoice.id}`}
+                      className="font-medium text-stark-navy hover:underline"
+                    >
+                      {invoice.invoiceNumber}
+                    </Link>
+                  </div>
                   <div className="text-xs text-gray-500">{invoice.supplierInvoiceRef}</div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-900">

@@ -10,7 +10,7 @@ import {
   approveRequest,
   rejectRequest,
 } from "@/hooks";
-import { Button, StatusBadge, SearchInput, Select } from "@/components/ui";
+import { Button, StatusBadge, SearchInput, Select, EscalationIndicator, EscalationBadge, getEscalationCardClass } from "@/components/ui";
 import type { EscalationLevel } from "@/lib/db";
 
 export function ApprovalQueue() {
@@ -219,11 +219,12 @@ export function ApprovalQueue() {
             return (
               <div
                 key={approval.id}
-                className="bg-white rounded-lg border border-gray-200 p-4"
+                className={`bg-white rounded-lg border p-4 ${getEscalationCardClass(approval.escalationLevel)}`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
+                      <EscalationIndicator level={approval.escalationLevel} />
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded uppercase ${getEntityTypeBadge(
                           approval.entityType
@@ -239,11 +240,7 @@ export function ApprovalQueue() {
                           {entity.number}
                         </Link>
                       )}
-                      {approval.escalationLevel === "urgent" && (
-                        <span className="px-2 py-1 bg-stark-orange-10 text-stark-orange border border-stark-orange/30 rounded text-xs font-medium">
-                          URGENT
-                        </span>
-                      )}
+                      <EscalationBadge level={approval.escalationLevel} />
                     </div>
 
                     <div className="grid grid-cols-4 gap-4 text-sm">

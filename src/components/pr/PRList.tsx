@@ -10,7 +10,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePurchaseRequests } from "@/hooks";
-import { Badge, SourceBadge, StatusBadge, SearchInput, Select, DateInput } from "@/components/ui";
+import { Badge, SourceBadge, StatusBadge, SearchInput, Select, DateInput, EscalationIndicator, getEscalationCardClass } from "@/components/ui";
 import type { PRSource, PRStatus, PurchaseRequest } from "@/lib/db";
 
 interface PRListProps {
@@ -219,10 +219,13 @@ export function PRList({ initialSource = "all", initialStatus = "all" }: PRListP
               paginatedPRs.map((pr) => (
                 <tr
                   key={pr.id}
-                  className="hover:bg-gray-50"
+                  className={`hover:bg-gray-50 ${getEscalationCardClass(pr.escalationLevel).replace('border-', 'border-l-2 border-l-')}`}
                 >
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                    {pr.prNumber}
+                    <div className="flex items-center gap-2">
+                      <EscalationIndicator level={pr.escalationLevel} />
+                      {pr.prNumber}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <SourceBadge source={pr.source} />

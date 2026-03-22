@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePurchaseOrders, useSuppliers } from "@/hooks";
-import { SearchInput, Select, StatusBadge, Button } from "@/components/ui";
+import { SearchInput, Select, StatusBadge, Button, EscalationIndicator, getEscalationCardClass } from "@/components/ui";
 import type { POStatus } from "@/lib/db";
 
 const PAGE_SIZE = 20;
@@ -108,8 +108,13 @@ export function POList() {
           {paginatedPOs.length === 0 ? (
             <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">No purchase orders found</td></tr>
           ) : paginatedPOs.map((po) => (
-            <tr key={po.id} className="hover:bg-gray-50">
-              <td className="px-4 py-3 text-sm font-medium text-gray-900">{po.poNumber}</td>
+            <tr key={po.id} className={`hover:bg-gray-50 ${getEscalationCardClass(po.escalationLevel).replace('border-', 'border-l-2 border-l-')}`}>
+              <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                <div className="flex items-center gap-2">
+                  <EscalationIndicator level={po.escalationLevel} />
+                  {po.poNumber}
+                </div>
+              </td>
               <td className="px-4 py-3 text-sm text-gray-500">{po.supplierName}</td>
               <td className="px-4 py-3 text-sm text-gray-500">{po.prIds.length}</td>
               <td className="px-4 py-3 text-sm text-gray-500">{po.lineItems.length}</td>

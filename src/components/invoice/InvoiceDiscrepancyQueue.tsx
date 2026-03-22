@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useDiscrepancyInvoices, usePurchaseOrders } from "@/hooks";
-import { Button, StatusBadge, SearchInput } from "@/components/ui";
+import { Button, StatusBadge, SearchInput, EscalationIndicator, EscalationBadge, getEscalationCardClass } from "@/components/ui";
 import type { MatchResult } from "@/lib/db";
 
 export function InvoiceDiscrepancyQueue() {
@@ -138,11 +138,12 @@ export function InvoiceDiscrepancyQueue() {
           sortedInvoices.map((invoice) => (
             <div
               key={invoice.id}
-              className="bg-white rounded-lg border border-gray-200 p-4"
+              className={`bg-white rounded-lg border p-4 ${getEscalationCardClass(invoice.escalationLevel)}`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
+                    <EscalationIndicator level={invoice.escalationLevel} />
                     <Link
                       href={`/invoices/${invoice.id}`}
                       className="text-lg font-semibold text-stark-navy hover:underline"
@@ -152,11 +153,7 @@ export function InvoiceDiscrepancyQueue() {
                     <span className={`px-2 py-1 rounded text-xs font-medium ${getDiscrepancyTypeColor(invoice.matchResult)}`}>
                       {getDiscrepancyTypeLabel(invoice.matchResult)}
                     </span>
-                    {invoice.escalationLevel === "urgent" && (
-                      <span className="px-2 py-1 bg-stark-orange-10 text-stark-orange border border-stark-orange/30 rounded text-xs font-medium">
-                        URGENT
-                      </span>
-                    )}
+                    <EscalationBadge level={invoice.escalationLevel} />
                   </div>
 
                   <div className="grid grid-cols-4 gap-4 text-sm">
