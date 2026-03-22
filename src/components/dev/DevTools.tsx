@@ -34,8 +34,8 @@ export function DevTools({ position = "bottom-right" }: DevToolsProps) {
         suppliers: 15,
         purchaseRequests: 20,
         purchaseOrders: 15,
-        invoices: 10,
-        approvals: 5,
+        invoices: 18,
+        approvals: 12,
         clearExisting: true,
       });
       setMessage("Database seeded successfully!");
@@ -117,7 +117,7 @@ export function DevTools({ position = "bottom-right" }: DevToolsProps) {
 
             <div className="pt-2 border-t border-gray-100">
               <p className="text-xs text-gray-400">
-                Seed: 15 suppliers, 20 PRs, 15 POs, 10 invoices, 5 approvals
+                Seed: 15 suppliers, 20 PRs, 15 POs, 18 invoices, 12 approvals
               </p>
             </div>
           </div>
