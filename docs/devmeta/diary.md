@@ -58,3 +58,31 @@ Also fixed all color violations across 19+ files — removed purple, blue, red, 
 **Key insight:** Visual intensity should increase with urgency. Ambient items should be barely noticeable; urgent items demand immediate attention through animation and color.
 
 ---
+
+## 2026-03-22 — UX Polish: Command Center Principles
+
+**Iteration 01.8 complete.** Applied STARK Command Center product experience principles across all list views.
+
+### What Changed
+
+1. **Collapsible Sections** — Lists now grouped by escalation level (Approvals) or status (Invoices). Urgent/Action sections expanded by default, others collapsed. Reduces cognitive load.
+
+2. **Compact Stats Bar** — Replaced 4-5 separate stat cards with inline clickable stats. "15 Total | 14 Active | 7 EDI | 12 PKT" is cleaner than 4 separate boxes.
+
+3. **Lucide Icons** — Removed all emojis from UI. Every icon is now a Lucide React component with semantic naming (PRIcon, InvoiceIcon, WarningIcon, etc.).
+
+4. **Tighter Spacing** — Reduced card padding from p-4 to p-3. Removed redundant borders. Cleaner visual density.
+
+### New Components
+
+- `Icon.tsx` — Lucide icon wrappers
+- `CollapsibleSection.tsx` — Expandable groups with escalation styling
+- `CompactStats.tsx` — Inline clickable filter stats
+
+### Key Insight
+
+The "state grouping" pattern is powerful for procurement workflows. Users don't want a flat list of 50 approvals — they want "3 Urgent, 5 Action Required, 12 Pending Review" with the ability to collapse what they're not working on right now.
+
+**The hierarchy:** Urgent items demand attention → Action items need decisions → Everything else can wait.
+
+---

@@ -19,3 +19,12 @@
 
 - **2026-03-22:** Orange is for ACTION, not decoration. 80% navy/gray, 15% green, 5% orange.
 - **2026-03-22:** Escalation left border (orange) indicates "Attention" level items.
+- **2026-03-22:** Use Lucide icons, never emojis. Import from `@/components/ui/Icon`.
+- **2026-03-22:** Group lists by escalation/status with CollapsibleSection. Urgent/Action expanded by default.
+- **2026-03-22:** Replace multiple stat cards with CompactStats inline bar.
+
+## Component Patterns
+
+- **2026-03-22:** For collapsible sections, use `shouldExpandByDefault(level)` to auto-expand urgent/action items.
+- **2026-03-22:** CompactStats expects `stats` array with `{ label, value, filter, variant? }` objects.
+- **2026-03-22:** Use `getEscalationCardClass(level)` for row/card background styling based on escalation.

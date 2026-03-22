@@ -54,7 +54,8 @@
 | 01.4 | Invoice & Matching | Invoice list, detail, matching workflow | ✅ |
 | 01.5 | Suppliers & Approvals | Supplier management, approval queue | ✅ |
 | 01.6 | Polish & Testing | E2E tests, edge cases, performance | IN PROGRESS |
-| **01.7** | **Visual Hierarchy** | **Lindstrøm escalation indicators across all lists** | **✅** |
+| 01.7 | Visual Hierarchy | Lindstrøm escalation indicators across all lists | ✅ |
+| **01.8** | **UX Polish** | **Collapsible sections, compact stats, Lucide icons** | **✅** |
 
 ---
 
