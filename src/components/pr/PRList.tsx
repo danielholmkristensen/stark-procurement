@@ -94,21 +94,6 @@ export function PRList({ initialSource = "all", initialStatus = "all" }: PRListP
     });
   };
 
-  // Get escalation border class
-  const getEscalationBorder = (level: string) => {
-    switch (level) {
-      case "urgent":
-        return "border-l-4 border-escalation-urgent";
-      case "action":
-        return "border-l-4 border-escalation-action";
-      case "attention":
-        return "border-l-4 border-stark-orange";
-      case "awareness":
-        return "border-l-4 border-escalation-awareness";
-      default:
-        return "";
-    }
-  };
 
   // Get status badge variant
   const getStatusVariant = (status: PRStatus): "default" | "primary" | "success" | "warning" | "danger" => {
@@ -234,7 +219,7 @@ export function PRList({ initialSource = "all", initialStatus = "all" }: PRListP
               paginatedPRs.map((pr) => (
                 <tr
                   key={pr.id}
-                  className={`hover:bg-gray-50 ${getEscalationBorder(pr.escalationLevel)}`}
+                  className="hover:bg-gray-50"
                 >
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">
                     {pr.prNumber}

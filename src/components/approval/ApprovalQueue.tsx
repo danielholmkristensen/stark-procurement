@@ -89,16 +89,6 @@ export function ApprovalQueue() {
     });
   };
 
-  const getEscalationBorder = (level: EscalationLevel) => {
-    const map: Record<EscalationLevel, string> = {
-      ambient: "",
-      awareness: "border-l-4 border-l-blue-400",
-      attention: "border-l-4 border-l-yellow-400",
-      action: "border-l-4 border-l-orange-400",
-      urgent: "border-l-4 border-l-red-500",
-    };
-    return map[level] ?? "";
-  };
 
   const getEntityTypeBadge = (type: string) => {
     const colors: Record<string, string> = {
@@ -228,9 +218,7 @@ export function ApprovalQueue() {
             return (
               <div
                 key={approval.id}
-                className={`bg-white rounded-lg border border-gray-200 p-4 ${getEscalationBorder(
-                  approval.escalationLevel
-                )}`}
+                className="bg-white rounded-lg border border-gray-200 p-4"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

@@ -63,12 +63,6 @@ export function POList() {
     return map[status] || status;
   };
 
-  const getEscalationBorder = (level: string) => {
-    if (level === "attention" || level === "action" || level === "urgent") {
-      return "border-l-4 border-stark-orange";
-    }
-    return "";
-  };
 
   if (!allPOs) {
     return <div className="bg-white rounded-lg border p-8 text-center text-gray-400">Loading...</div>;
@@ -114,7 +108,7 @@ export function POList() {
           {paginatedPOs.length === 0 ? (
             <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">No purchase orders found</td></tr>
           ) : paginatedPOs.map((po) => (
-            <tr key={po.id} className={`hover:bg-gray-50 ${getEscalationBorder(po.escalationLevel)}`}>
+            <tr key={po.id} className="hover:bg-gray-50">
               <td className="px-4 py-3 text-sm font-medium text-gray-900">{po.poNumber}</td>
               <td className="px-4 py-3 text-sm text-gray-500">{po.supplierName}</td>
               <td className="px-4 py-3 text-sm text-gray-500">{po.prIds.length}</td>

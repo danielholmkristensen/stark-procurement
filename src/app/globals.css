@@ -113,18 +113,12 @@
 }
 
 /* =============================================================================
-   Escalation Border Patterns
+   Escalation: Micro-cues via badges only
+
+   The status badges and match result badges provide escalation context.
+   No additional row borders or indicators needed.
+   Orange is earned via badge color, not borders.
    ============================================================================= */
-
-/* Attention level - orange left border */
-.escalation-attention {
-  @apply border-l-2 border-stark-orange;
-}
-
-/* Action level - orange background button */
-.escalation-action {
-  @apply bg-stark-orange text-white hover:bg-stark-orange-hover;
-}
 
 /* =============================================================================
    Component Utilities
@@ -139,10 +133,6 @@
   @apply shadow-sm;
 }
 
-/* Table row with attention state */
-.table-row-attention {
-  @apply border-l-4 border-stark-orange bg-stark-orange-10/30;
-}
 
 /* Progress bar styling */
 .progress-bar {
@@ -180,9 +170,6 @@
   @apply px-5 py-3 hover:bg-gray-50 cursor-pointer transition-colors;
 }
 
-.activity-item-attention {
-  @apply border-l-2 border-stark-orange;
-}
 
 /* =============================================================================
    Navigation Active States

@@ -73,16 +73,6 @@ export function InvoiceDiscrepancyQueue() {
     return map[result] ?? "bg-gray-100 text-gray-700";
   };
 
-  const getEscalationBorder = (level: string) => {
-    const map: Record<string, string> = {
-      ambient: "",
-      awareness: "border-l-4 border-l-blue-400",
-      attention: "border-l-4 border-l-yellow-400",
-      action: "border-l-4 border-l-orange-400",
-      urgent: "border-l-4 border-l-red-500",
-    };
-    return map[level] ?? "";
-  };
 
   const discrepancyTypes: MatchResult[] = [
     "quantity_mismatch",
@@ -147,7 +137,7 @@ export function InvoiceDiscrepancyQueue() {
           sortedInvoices.map((invoice) => (
             <div
               key={invoice.id}
-              className={`bg-white rounded-lg border border-gray-200 p-4 ${getEscalationBorder(invoice.escalationLevel)}`}
+              className="bg-white rounded-lg border border-gray-200 p-4"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

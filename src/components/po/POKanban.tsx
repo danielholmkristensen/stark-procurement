@@ -55,9 +55,7 @@ export function POKanban() {
             {posByStatus[col.status]?.slice(0, 5).map((po) => (
               <Link key={po.id} href={`/pos/${po.id}`}>
                 <div className={`bg-white rounded-lg p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
-                  po.escalationLevel === "attention" || po.escalationLevel === "action" || po.escalationLevel === "urgent"
-                    ? "border-l-4 border-stark-orange"
-                    : col.status === "received" ? "border border-green-200" : "border border-gray-200"
+                  col.status === "received" ? "border border-green-200" : "border border-gray-200"
                 }`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-sm">{po.poNumber}</span>

@@ -126,16 +126,6 @@ export function InvoiceList({
     return map[result] ?? result;
   };
 
-  const getEscalationBorder = (level: string) => {
-    const map: Record<string, string> = {
-      ambient: "",
-      awareness: "border-l-4 border-l-blue-400",
-      attention: "border-l-4 border-l-yellow-400",
-      action: "border-l-4 border-l-orange-400",
-      urgent: "border-l-4 border-l-red-500",
-    };
-    return map[level] ?? "";
-  };
 
   return (
     <div className="space-y-4">
@@ -236,7 +226,7 @@ export function InvoiceList({
             {paginatedInvoices.map((invoice) => (
               <tr
                 key={invoice.id}
-                className={`hover:bg-gray-50 ${getEscalationBorder(invoice.escalationLevel)}`}
+                className="hover:bg-gray-50"
               >
                 <td className="px-4 py-3">
                   <Link
