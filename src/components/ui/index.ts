@@ -12,4 +12,6 @@ export { SearchInput } from "./SearchInput";
 export { DateInput } from "./DateInput";
 export { CollapsibleSection, shouldExpandByDefault } from "./CollapsibleSection";
 export { CompactStats, CompactStatsVertical } from "./CompactStats";
+export { LinkageStatusBadge } from "./LinkageStatusBadge";
+export { LinkedPRsBadge } from "./LinkedPRsBadge";
 export * from "./Icon";
