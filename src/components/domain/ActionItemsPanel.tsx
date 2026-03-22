@@ -1,43 +1,89 @@
 /**
- * Action Items Panel
+ * Handle Now Queue
  *
- * Groups action items by escalation level:
- * - Urgent (expanded by default)
- * - Attention (collapsed by default)
+ * Shows exceptions requiring human judgment with specific actions.
+ * Each item has named problem type and inline action buttons.
  */
 
 "use client";
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { AlertTriangle, Eye, FileText, ClipboardList, Receipt } from "lucide-react";
-import { usePurchaseRequests, usePurchaseOrders, useApprovals, useInvoices } from "@/hooks";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CollapsibleSection,
-  Button,
-  EscalationIndicator,
-} from "@/components/ui";
-import type { EscalationLevel } from "@/lib/db";
+  XCircle,
+  DollarSign,
+  Package,
+  Clock,
+  FileText,
+  ClipboardList,
+  Receipt,
+} from "lucide-react";
+import { usePurchaseRequests, usePurchaseOrders, useInvoices } from "@/hooks";
+import { Card, CardHeader, CardTitle, Button } from "@/components/ui";
 
-interface ActionItem {
+type ExceptionType =
+  | "supplier_rejection"
+  | "price_increase"
+  | "quantity_partial"
+  | "delivery_delay"
+  | "invoice_discrepancy"
+  | "overdue_po";
+
+interface HandleNowItem {
   id: string;
-  type: "pr" | "po" | "invoice" | "approval";
+  type: ExceptionType;
+  entityType: "pr" | "po" | "invoice";
   entityId: string;
   title: string;
   description: string;
-  value?: string;
-  escalationLevel: EscalationLevel;
-  actionLabel: string;
-  href: string;
+  impact?: string;
+  urgency: "critical" | "high" | "medium";
+  actions: Array<{
+    label: string;
+    href?: string;
+    variant?: "action" | "primary" | "outline";
+  }>;
 }
+
+const exceptionConfig: Record<
+  ExceptionType,
+  { icon: typeof XCircle; label: string; color: string }
+> = {
+  supplier_rejection: {
+    icon: XCircle,
+    label: "Supplier rejection",
+    color: "text-red-600",
+  },
+  price_increase: {
+    icon: DollarSign,
+    label: "Price increase",
+    color: "text-stark-orange",
+  },
+  quantity_partial: {
+    icon: Package,
+    label: "Quantity partial",
+    color: "text-amber-600",
+  },
+  delivery_delay: {
+    icon: Clock,
+    label: "Delivery delay",
+    color: "text-amber-600",
+  },
+  invoice_discrepancy: {
+    icon: Receipt,
+    label: "Invoice discrepancy",
+    color: "text-stark-orange",
+  },
+  overdue_po: {
+    icon: Clock,
+    label: "Overdue",
+    color: "text-red-600",
+  },
+};
 
 export function ActionItemsPanel() {
   const allPRs = usePurchaseRequests();
   const allPOs = usePurchaseOrders();
-  const allApprovals = useApprovals();
   const allInvoices = useInvoices();
 
   const formatCurrency = (value: number) =>
@@ -47,117 +93,116 @@ export function ActionItemsPanel() {
       minimumFractionDigits: 0,
     }).format(value);
 
-  // Build action items from all entities
-  const actionItems = useMemo(() => {
-    const items: ActionItem[] = [];
+  const handleNowItems = useMemo(() => {
+    const items: HandleNowItem[] = [];
+    const now = new Date();
 
-    // PRs with urgent/action escalation
-    (allPRs || []).forEach((pr) => {
-      if (
-        (pr.escalationLevel === "urgent" || pr.escalationLevel === "action") &&
-        pr.status !== "converted" &&
-        pr.status !== "rejected"
-      ) {
-        items.push({
-          id: `pr-${pr.id}`,
-          type: "pr",
-          entityId: pr.id,
-          title: pr.prNumber,
-          description: `${pr.source.toUpperCase()} - ${pr.branchName}`,
-          value: formatCurrency(pr.totalEstimatedValue),
-          escalationLevel: pr.escalationLevel,
-          actionLabel: "Review",
-          href: `/prs/${pr.id}`,
-        });
-      }
-    });
-
-    // POs with urgent/action escalation
+    // POs with issues
     (allPOs || []).forEach((po) => {
+      // Overdue POs (sent but not confirmed, delivery date passed)
       if (
-        (po.escalationLevel === "urgent" || po.escalationLevel === "action") &&
-        po.status !== "completed" &&
-        po.status !== "cancelled"
+        po.status === "sent" &&
+        !po.confirmedAt &&
+        po.requestedDeliveryDate
       ) {
-        const action = po.status === "draft" ? "Send" : "Review";
-        items.push({
-          id: `po-${po.id}`,
-          type: "po",
-          entityId: po.id,
-          title: po.poNumber,
-          description: po.supplierName,
-          value: formatCurrency(po.total),
-          escalationLevel: po.escalationLevel,
-          actionLabel: action,
-          href: `/pos/${po.id}`,
-        });
+        const deliveryDate = new Date(po.requestedDeliveryDate);
+        if (deliveryDate < now) {
+          items.push({
+            id: `po-overdue-${po.id}`,
+            type: "overdue_po",
+            entityType: "po",
+            entityId: po.id,
+            title: po.poNumber,
+            description: `${po.supplierName} • No confirmation`,
+            impact: formatCurrency(po.total),
+            urgency: "critical",
+            actions: [
+              { label: "Contact Supplier", href: `/pos/${po.id}`, variant: "action" },
+              { label: "Find Alternative", href: `/suppliers`, variant: "outline" },
+            ],
+          });
+        }
+      }
+
+      // Confirmed but with delivery delay
+      if (
+        po.confirmedDeliveryDate &&
+        po.requestedDeliveryDate &&
+        po.status !== "received" &&
+        po.status !== "completed"
+      ) {
+        const confirmed = new Date(po.confirmedDeliveryDate);
+        const requested = new Date(po.requestedDeliveryDate);
+        const delayDays = Math.ceil(
+          (confirmed.getTime() - requested.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        if (delayDays > 0) {
+          items.push({
+            id: `po-delay-${po.id}`,
+            type: "delivery_delay",
+            entityType: "po",
+            entityId: po.id,
+            title: po.poNumber,
+            description: `${po.supplierName} • ${delayDays}d delayed`,
+            impact: `Need by ${requested.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`,
+            urgency: delayDays > 3 ? "critical" : "high",
+            actions: [
+              { label: "Notify Store", href: `/pos/${po.id}`, variant: "action" },
+              { label: "Accept Delay", href: `/pos/${po.id}`, variant: "outline" },
+            ],
+          });
+        }
       }
     });
 
-    // Invoices with discrepancies or urgent escalation
+    // Invoices with discrepancies
     (allInvoices || []).forEach((inv) => {
-      if (
-        (inv.escalationLevel === "urgent" || inv.escalationLevel === "action") ||
-        inv.status === "discrepancy"
-      ) {
+      if (inv.status === "discrepancy" || inv.matchResult === "price_mismatch" || inv.matchResult === "quantity_mismatch") {
+        const isPriceMismatch = inv.matchResult === "price_mismatch";
+        const isQtyMismatch = inv.matchResult === "quantity_mismatch";
+
         items.push({
           id: `inv-${inv.id}`,
-          type: "invoice",
+          type: isPriceMismatch
+            ? "price_increase"
+            : isQtyMismatch
+            ? "quantity_partial"
+            : "invoice_discrepancy",
+          entityType: "invoice",
           entityId: inv.id,
           title: inv.invoiceNumber,
-          description: inv.matchResult === "quantity_mismatch"
-            ? "Qty discrepancy"
-            : inv.matchResult === "price_mismatch"
-            ? "Price discrepancy"
-            : inv.supplierName,
-          value: inv.discrepancyAmount
-            ? formatCurrency(inv.discrepancyAmount)
+          description: `${inv.supplierName}`,
+          impact: inv.discrepancyAmount
+            ? `${inv.discrepancyAmount > 0 ? "+" : ""}${formatCurrency(inv.discrepancyAmount)} variance`
             : formatCurrency(inv.total),
-          escalationLevel: inv.escalationLevel,
-          actionLabel: "Review",
-          href: `/invoices/${inv.id}`,
+          urgency: Math.abs(inv.discrepancyAmount || 0) > 10000 ? "critical" : "high",
+          actions: isPriceMismatch
+            ? [
+                { label: "Accept", href: `/invoices/${inv.id}`, variant: "primary" },
+                { label: "Reject", href: `/invoices/${inv.id}`, variant: "outline" },
+                { label: "Negotiate", href: `/invoices/${inv.id}`, variant: "outline" },
+              ]
+            : [
+                { label: "Review", href: `/invoices/${inv.id}`, variant: "action" },
+                { label: "Resolve", href: `/invoices/${inv.id}`, variant: "outline" },
+              ],
         });
       }
     });
 
-    // Pending approvals
-    (allApprovals || []).forEach((approval) => {
-      if (approval.status === "pending") {
-        items.push({
-          id: `approval-${approval.id}`,
-          type: "approval",
-          entityId: approval.entityId,
-          title: `${approval.entityType.toUpperCase()} Approval`,
-          description:
-            approval.amount > approval.threshold
-              ? "Over threshold"
-              : "Awaiting approval",
-          value: formatCurrency(approval.amount),
-          escalationLevel: approval.escalationLevel,
-          actionLabel: "Approve",
-          href: `/approvals`,
-        });
-      }
-    });
+    // Sort by urgency (critical first)
+    const urgencyOrder = { critical: 0, high: 1, medium: 2 };
+    items.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
 
     return items;
-  }, [allPRs, allPOs, allApprovals, allInvoices]);
+  }, [allPRs, allPOs, allInvoices]);
 
-  // Group by urgency
-  const urgentItems = actionItems.filter(
-    (item) => item.escalationLevel === "urgent"
-  );
-  const attentionItems = actionItems.filter(
-    (item) => item.escalationLevel === "action" || item.escalationLevel === "attention"
-  );
-
-  const totalCount = actionItems.length;
-
-  if (totalCount === 0) {
+  if (handleNowItems.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Action Items</CardTitle>
+          <CardTitle>Handle Now</CardTitle>
         </CardHeader>
         <div className="px-5 py-8 text-center text-gray-400">
           <div className="flex justify-center mb-2">
@@ -177,92 +222,83 @@ export function ActionItemsPanel() {
               </svg>
             </div>
           </div>
-          All caught up! No urgent items.
+          All caught up! No exceptions requiring your attention.
         </div>
       </Card>
     );
   }
 
+  // Group by urgency
+  const criticalItems = handleNowItems.filter((i) => i.urgency === "critical");
+  const highItems = handleNowItems.filter((i) => i.urgency === "high");
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Action Items</CardTitle>
-        <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700 rounded">
-          {totalCount}
+        <CardTitle>Handle Now</CardTitle>
+        <span className="px-2 py-0.5 text-xs font-medium bg-stark-orange-10 text-stark-orange rounded">
+          {handleNowItems.length}
         </span>
       </CardHeader>
-      <div className="p-4 space-y-3">
-        {/* Urgent Section */}
-        {urgentItems.length > 0 && (
-          <CollapsibleSection
-            title="Urgent"
-            count={urgentItems.length}
-            defaultExpanded={true}
-            escalationLevel="urgent"
-          >
-            <div className="divide-y divide-gray-100">
-              {urgentItems.map((item) => (
-                <ActionItemRow key={item.id} item={item} />
-              ))}
-            </div>
-          </CollapsibleSection>
-        )}
-
-        {/* Attention Section */}
-        {attentionItems.length > 0 && (
-          <CollapsibleSection
-            title="Attention"
-            count={attentionItems.length}
-            defaultExpanded={urgentItems.length === 0}
-            escalationLevel="action"
-          >
-            <div className="divide-y divide-gray-100">
-              {attentionItems.map((item) => (
-                <ActionItemRow key={item.id} item={item} />
-              ))}
-            </div>
-          </CollapsibleSection>
-        )}
+      <div className="divide-y divide-gray-100">
+        {criticalItems.map((item) => (
+          <HandleNowRow key={item.id} item={item} />
+        ))}
+        {highItems.map((item) => (
+          <HandleNowRow key={item.id} item={item} />
+        ))}
       </div>
     </Card>
   );
 }
 
-function ActionItemRow({ item }: { item: ActionItem }) {
-  const TypeIcon = {
-    pr: FileText,
-    po: ClipboardList,
-    invoice: Receipt,
-    approval: AlertTriangle,
-  }[item.type];
+function HandleNowRow({ item }: { item: HandleNowItem }) {
+  const config = exceptionConfig[item.type];
+  const Icon = config.icon;
+
+  const urgencyIndicator = {
+    critical: "bg-red-100 border-l-red-500",
+    high: "bg-stark-orange-10 border-l-stark-orange",
+    medium: "bg-amber-50 border-l-amber-400",
+  }[item.urgency];
 
   return (
-    <div className="px-3 py-3 flex items-center justify-between hover:bg-gray-50">
-      <div className="flex items-center gap-3">
-        <div className="flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-            <TypeIcon size={16} className="text-gray-500" />
+    <div
+      className={`px-4 py-3 border-l-2 ${urgencyIndicator}`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <div className="flex-shrink-0 mt-0.5">
+            <Icon size={16} className={config.color} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-medium uppercase ${config.color}`}>
+                {config.label}
+              </span>
+              <span className="text-sm font-medium text-gray-900">
+                {item.title}
+              </span>
+            </div>
+            <p className="text-sm text-gray-600 truncate">{item.description}</p>
+            {item.impact && (
+              <p className="text-xs text-gray-500 mt-0.5">{item.impact}</p>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <EscalationIndicator level={item.escalationLevel} size="sm" />
-          <div>
-            <p className="text-sm font-medium text-gray-900">{item.title}</p>
-            <p className="text-xs text-gray-500">
-              {item.description}
-              {item.value && <span className="ml-1 font-medium">{item.value}</span>}
-            </p>
-          </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {item.actions.slice(0, 2).map((action, idx) => (
+            <Link key={idx} href={action.href || "#"}>
+              <Button
+                variant={action.variant || "primary"}
+                size="sm"
+              >
+                {action.label}
+              </Button>
+            </Link>
+          ))}
         </div>
       </div>
-      <Link href={item.href}>
-        <Button
-          variant={item.escalationLevel === "urgent" ? "action" : "primary"}
-          size="sm"
-        >
-          {item.actionLabel}
-        </Button>
-      </Link>
     </div>
   );
 }

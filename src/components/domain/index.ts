@@ -4,3 +4,4 @@ export { ActivityFeed } from "./ActivityFeed";
 export { MorningBriefing } from "./MorningBriefing";
 export { ActionItemsPanel } from "./ActionItemsPanel";
 export { MyWorkload } from "./MyWorkload";
+export { AutomationReport } from "./AutomationReport";

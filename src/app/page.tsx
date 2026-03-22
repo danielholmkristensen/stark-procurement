@@ -5,8 +5,8 @@ import {
   MorningBriefing,
   ActionItemsPanel,
   MyWorkload,
+  AutomationReport,
 } from "@/components/domain";
-import { EscalationLegend } from "@/components/escalation";
 
 export default function DashboardPage() {
   return (
@@ -14,10 +14,10 @@ export default function DashboardPage() {
       <Header />
       <main className="flex-1">
         <div className="max-w-6xl mx-auto px-6 py-6">
-          {/* Morning Briefing - 3 Questions in 10 Seconds */}
+          {/* Morning Briefing - 3 Action-Enabling Questions */}
           <MorningBriefing />
 
-          {/* Action Items - Urgent/Attention Grouped */}
+          {/* Handle Now - Exceptions Requiring Human Judgment */}
           <div className="mb-6">
             <ActionItemsPanel />
           </div>
@@ -29,16 +29,12 @@ export default function DashboardPage() {
               <POPipeline />
             </div>
 
-            {/* My Workload + Activity Feed */}
+            {/* Right Column: Queue + Automation + Activity */}
             <div className="space-y-6">
               <MyWorkload />
+              <AutomationReport />
               <ActivityFeed />
             </div>
-          </div>
-
-          {/* Escalation Hierarchy Legend */}
-          <div className="mt-6">
-            <EscalationLegend />
           </div>
         </div>
       </main>
