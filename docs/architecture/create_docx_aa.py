@@ -306,22 +306,28 @@ def create_document():
     h2.runs[0].font.color.rgb = AA_BLACK
 
     adapt_intro = doc.add_paragraph()
-    adapt_intro.add_run(
-        "Our delivery follows the ADAPT methodology—a structured approach that ensures quality at speed:"
-    )
+    adapt_intro.add_run("ADAPT: ").bold = True
+    adapt_intro.add_run("Agentic Development with Artifact Persistence & Testing")
     adapt_intro.paragraph_format.space_after = Pt(12)
 
+    adapt_desc = doc.add_paragraph()
+    adapt_desc.add_run(
+        "ADAPT is a methodology for AI-assisted software delivery that ensures knowledge compounds across sessions, "
+        "quality is enforced through test-gated tasks, and work is structured for maximum parallelization."
+    )
+    adapt_desc.paragraph_format.space_after = Pt(12)
+
     adapt_items = [
-        ("A — Assess", "Deep understanding of requirements, existing systems, and constraints before writing any code."),
-        ("D — Design", "Architecture decisions documented and reviewed. No 'figure it out as we go.'"),
-        ("A — Assemble", "AI-assisted code generation under engineer supervision. Every line reviewed."),
-        ("P — Prove", "Comprehensive testing, security review, and validation against requirements."),
-        ("T — Transfer", "Full documentation, walkthrough, and knowledge transfer. You own the code."),
+        ("Agentic", "AI agents work autonomously on well-defined tasks within clear boundaries. Human engineers set direction, review output, and make architectural decisions."),
+        ("Development", "Real engineering—not prototyping. Production-grade code with proper error handling, type safety, and maintainability."),
+        ("Artifact", "Every decision, lesson, and context is persisted in structured knowledge stores. Nothing is lost between sessions."),
+        ("Persistence", "Session continuity through shared context logs, lessons learned, and development diaries. The next session picks up exactly where this one left off."),
+        ("Testing", "Test-gated task completion. No task is marked done until tests pass. Quality is enforced, not hoped for."),
     ]
 
-    for letter, desc in adapt_items:
+    for term, desc in adapt_items:
         p = doc.add_paragraph()
-        run = p.add_run(f"{letter}: ")
+        run = p.add_run(f"{term}: ")
         run.bold = True
         p.add_run(desc)
         p.paragraph_format.space_after = Pt(6)
