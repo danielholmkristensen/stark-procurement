@@ -1,0 +1,3 @@
+[submodule ".ai-assisted-architecture"]
+	path = .ai-assisted-architecture
+	url = https://github.com/dermot-obrien/ai-assisted-architecture.git
