@@ -1,0 +1,213 @@
+<mxfile host="app.diagrams.net" modified="2026-03-23T12:00:00.000Z" agent="STARK Procurement" version="21.0.0" type="device">
+  <diagram name="Data Model" id="data-model-er">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="Data Model — Entity Relationships" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#00326E;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="500" y="20" width="600" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- USER Entity -->
+        <mxCell id="user-header" value="&lt;b&gt;USER&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;(from SSO)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#00326E;strokeColor=#00326E;fontColor=#FFFFFF;fontFamily=Arial;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="user-body" value="userId (FK to SSO)&lt;br&gt;role: buyer|approver|admin&lt;br&gt;approvalLimitDKK&lt;br&gt;effectiveFrom" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8EEF7;strokeColor=#00326E;fontColor=#00326E;fontFamily=Arial;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="80" y="140" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- PURCHASE_REQUEST Entity -->
+        <mxCell id="pr-header" value="&lt;b&gt;PURCHASE_REQUEST&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#0A5AC8;strokeColor=#00326E;fontColor=#FFFFFF;fontFamily=Arial;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="360" y="100" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-body" value="id: uuid PK&lt;br&gt;source: relex|ecom|salesapp&lt;br&gt;sourceReference: string&lt;br&gt;supplierId: uuid FK&lt;br&gt;needByDate: date&lt;br&gt;totalValue: decimal&lt;br&gt;status: string" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8EEF7;strokeColor=#00326E;fontColor=#00326E;fontFamily=Arial;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="360" y="140" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- PURCHASE_ORDER Entity -->
+        <mxCell id="po-header" value="&lt;b&gt;PURCHASE_ORDER&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#00326E;strokeColor=#00326E;fontColor=#FFFFFF;fontFamily=Arial;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="660" y="100" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="po-body" value="id: uuid PK&lt;br&gt;poNumber: PO-YYYY-NNNNN&lt;br&gt;supplierId: uuid FK&lt;br&gt;requestedDeliveryDate: date&lt;br&gt;total: decimal&lt;br&gt;status: draft|approved|sent|&lt;br&gt;         confirmed|received" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8EEF7;strokeColor=#00326E;fontColor=#00326E;fontFamily=Arial;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="660" y="140" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- PO_LINE_ITEM Entity -->
+        <mxCell id="poli-header" value="&lt;b&gt;PO_LINE_ITEM&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90BEEB;strokeColor=#0A5AC8;fontColor=#00326E;fontFamily=Arial;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="520" y="320" width="160" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="poli-body" value="id: uuid PK&lt;br&gt;poId: uuid FK&lt;br&gt;prId: uuid FK (packet)&lt;br&gt;sku, qty, unitPrice" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8EEF7;strokeColor=#0A5AC8;fontColor=#00326E;fontFamily=Arial;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="520" y="355" width="160" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- INVOICE Entity -->
+        <mxCell id="inv-header" value="&lt;b&gt;INVOICE&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#00326E;strokeColor=#00326E;fontColor=#FFFFFF;fontFamily=Arial;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="960" y="100" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="inv-body" value="id: uuid PK&lt;br&gt;invoiceNumber: string&lt;br&gt;supplierId: uuid FK&lt;br&gt;matchedPOId: uuid FK&lt;br&gt;total: decimal&lt;br&gt;matchResult: exact|tolerance|&lt;br&gt;              discrepancy&lt;br&gt;status: string" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8EEF7;strokeColor=#00326E;fontColor=#00326E;fontFamily=Arial;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="960" y="140" width="200" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- INVOICE_LINE_ITEM Entity -->
+        <mxCell id="invli-header" value="&lt;b&gt;INVOICE_LINE_ITEM&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90BEEB;strokeColor=#0A5AC8;fontColor=#00326E;fontFamily=Arial;fontSize=11;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="960" y="320" width="160" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="invli-body" value="id: uuid PK&lt;br&gt;invoiceId: uuid FK&lt;br&gt;sku, qty, unitPrice" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8EEF7;strokeColor=#0A5AC8;fontColor=#00326E;fontFamily=Arial;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="960" y="355" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- SUPPLIER Entity -->
+        <mxCell id="sup-header" value="&lt;b&gt;SUPPLIER&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;(cached from MDM)&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B9BDD7;strokeColor=#00326E;fontColor=#00326E;fontFamily=Arial;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="660" y="500" width="200" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="sup-body" value="id: uuid PK&lt;br&gt;name, ediCode, email&lt;br&gt;preferredChannel: edi|email&lt;br&gt;supportsPacketLabeling: bool" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8EEF7;strokeColor=#00326E;fontColor=#00326E;fontFamily=Arial;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="660" y="545" width="200" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- APPROVAL Entity -->
+        <mxCell id="app-header" value="&lt;b&gt;APPROVAL&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5821E;strokeColor=#00326E;fontColor=#FFFFFF;fontFamily=Arial;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="360" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="app-body" value="id: uuid PK&lt;br&gt;entityType: PO|INVOICE&lt;br&gt;entityId: uuid FK&lt;br&gt;decidedBy: uuid FK&lt;br&gt;onBehalfOf: uuid FK (nullable)&lt;br&gt;decision: approved|rejected&lt;br&gt;reason: string&lt;br&gt;decidedAt: timestamp" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#F5821E;fontColor=#00326E;fontFamily=Arial;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="80" y="400" width="180" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- DELEGATION Entity -->
+        <mxCell id="del-header" value="&lt;b&gt;DELEGATION&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5821E;strokeColor=#00326E;fontColor=#FFFFFF;fontFamily=Arial;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="580" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="del-body" value="id: uuid PK&lt;br&gt;delegatorId: uuid FK&lt;br&gt;delegateId: uuid FK&lt;br&gt;startDate, endDate&lt;br&gt;scope: ALL|PO|INVOICE&lt;br&gt;maxValueDKK: decimal" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#F5821E;fontColor=#00326E;fontFamily=Arial;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="80" y="620" width="180" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Relationships -->
+        <!-- USER creates PR -->
+        <mxCell id="rel1" value="creates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#00326E;strokeWidth=1;fontFamily=Arial;fontSize=9;fontColor=#00326E;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="user-body" target="pr-body">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- USER creates PO -->
+        <mxCell id="rel2" value="creates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#00326E;strokeWidth=1;fontFamily=Arial;fontSize=9;fontColor=#00326E;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="user-body" target="po-body">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="170" y="80" />
+              <mxPoint x="760" y="80" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- PR converted to PO_LINE_ITEM -->
+        <mxCell id="rel3" value="converted to" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0A5AC8;strokeWidth=1;fontFamily=Arial;fontSize=9;fontColor=#0A5AC8;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="pr-body" target="poli-body">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PO contains PO_LINE_ITEM -->
+        <mxCell id="rel4" value="contains" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#00326E;strokeWidth=1;fontFamily=Arial;fontSize=9;fontColor=#00326E;endArrow=ERmanyToMany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="po-body" target="poli-body">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- PO requires APPROVAL -->
+        <mxCell id="rel5" value="requires" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F5821E;strokeWidth=1;fontFamily=Arial;fontSize=9;fontColor=#F5821E;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="po-body" target="app-body">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="330" y="200" />
+              <mxPoint x="330" y="470" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- INVOICE contains LINE_ITEM -->
+        <mxCell id="rel6" value="contains" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#00326E;strokeWidth=1;fontFamily=Arial;fontSize=9;fontColor=#00326E;endArrow=ERmanyToMany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="inv-body" target="invli-body">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- INVOICE matched to PO -->
+        <mxCell id="rel7" value="matched to" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#00326E;strokeWidth=1;fontFamily=Arial;fontSize=9;fontColor=#00326E;endArrow=ERzeroToOne;endFill=0;startArrow=ERone;startFill=0;dashed=1;" edge="1" parent="1" source="inv-body" target="po-body">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="920" y="180" />
+              <mxPoint x="920" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- INVOICE requires APPROVAL -->
+        <mxCell id="rel8" value="requires" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F5821E;strokeWidth=1;fontFamily=Arial;fontSize=9;fontColor=#F5821E;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="inv-body" target="app-body">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1200" y="210" />
+              <mxPoint x="1200" y="750" />
+              <mxPoint x="170" y="750" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- SUPPLIER receives PO -->
+        <mxCell id="rel9" value="receives" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#00326E;strokeWidth=1;fontFamily=Arial;fontSize=9;fontColor=#00326E;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="sup-header" target="po-body">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- USER delegates -->
+        <mxCell id="rel10" value="delegates to" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F5821E;strokeWidth=1;fontFamily=Arial;fontSize=9;fontColor=#F5821E;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="user-body" target="del-body">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- USER decides APPROVAL -->
+        <mxCell id="rel11" value="decides" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F5821E;strokeWidth=1;fontFamily=Arial;fontSize=9;fontColor=#F5821E;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;" edge="1" parent="1" source="user-body" target="app-header">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="40" y="180" />
+              <mxPoint x="40" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00326E;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="100" width="180" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" value="&lt;b&gt;Legend&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#00326E;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="105" width="80" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#00326E;strokeColor=#00326E;" vertex="1" parent="1">
+          <mxGeometry x="1275" y="135" width="25" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1t" value="Core Entity" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#00326E;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="135" width="80" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#0A5AC8;strokeColor=#00326E;" vertex="1" parent="1">
+          <mxGeometry x="1275" y="160" width="25" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2t" value="Source/Input" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#00326E;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="160" width="80" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5821E;strokeColor=#00326E;" vertex="1" parent="1">
+          <mxGeometry x="1275" y="185" width="25" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3t" value="Approval/Control" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#00326E;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="185" width="100" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B9BDD7;strokeColor=#00326E;" vertex="1" parent="1">
+          <mxGeometry x="1275" y="210" width="25" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4t" value="External/Cached" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#00326E;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="210" width="100" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg5" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90BEEB;strokeColor=#0A5AC8;" vertex="1" parent="1">
+          <mxGeometry x="1275" y="235" width="25" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5t" value="Line Item Detail" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#00326E;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="235" width="100" height="18" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
