@@ -99,6 +99,15 @@ If pending items exist:
 - Task title: "Address feedback: [summary]"
 - Task acceptance: "Feedback resolved, change tracker updated"
 - After addressing: `curl -s -X POST "$FEEDBACK_URL/api/changes/[changeId]/resolve" -H "Content-Type: application/json" -d '{"resolution":"Addressed in this Feature wave","implemented_by":"adapt-agent"}'`
+- Emit screens.updated to notify UI:
+  ```bash
+  curl -s -X POST "$GATEWAY_URL/publish" -H "Content-Type: application/json" -d '{
+    "eventType": "screens.updated",
+    "source": "adapt-agent",
+    "schemaVersion": 1,
+    "payload": { "screenId": "[screenId]", "status": "REVIEW", "message": "Feedback addressed: [summary]" }
+  }'
+  ```
 
 ### Phase 5: Execute Waves
 
