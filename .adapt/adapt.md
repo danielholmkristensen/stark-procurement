@@ -34,6 +34,33 @@ npm ls dexie                # Should show 4.x
 6. **Type safety** — No `any` types, strict TypeScript
 7. **Lucide icons** — Never use emojis in UI; use Lucide React icons
 
+## Git Workflow Policy
+
+### Release Notes Required
+
+**Before any commit that completes a Feature or Iteration:**
+1. Create release notes in `docs/releases/YYYY-MM-DD-<feature-name>.md`
+2. Include: overview, what's new, files changed, commits, contributors
+3. Commit release notes as part of the final PR
+
+### Pull Request Workflow
+
+**All changes go through PRs — no direct pushes to main.**
+
+1. Create feature branch: `git checkout -b feature/YYYY-MM-DD-<feature-name>`
+2. Push branch: `git push -u origin feature/YYYY-MM-DD-<feature-name>`
+3. Create PR: `gh pr create --title "<Feature title>" --body "<summary>"`
+4. Push to all remotes: `./scripts/push-all.sh` (pushes to both dhk + origin)
+
+### Auto-Merge Policy
+
+PRs are auto-merged to main after **2 hours** if:
+- CI checks pass
+- No blocking review comments
+- Not explicitly marked "DO NOT MERGE"
+
+This is enforced via GitHub Action (`.github/workflows/auto-merge.yml`).
+
 ## ADAPT Harness
 
 This project uses the ADAPT methodology (Agentic Development with Artifact Persistence & Testing).

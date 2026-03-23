@@ -1,0 +1,105 @@
+name: Auto-Merge PRs
+
+on:
+  schedule:
+    # Run every 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Auto-merge eligible PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+            const now = new Date();
+
+            // Get all open PRs
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              base: 'main'
+            });
+
+            for (const pr of prs) {
+              // Skip if marked DO NOT MERGE
+              if (pr.title.includes('DO NOT MERGE') || pr.body?.includes('DO NOT MERGE')) {
+                console.log(`Skipping PR #${pr.number}: marked DO NOT MERGE`);
+                continue;
+              }
+
+              // Skip draft PRs
+              if (pr.draft) {
+                console.log(`Skipping PR #${pr.number}: draft`);
+                continue;
+              }
+
+              // Check PR age
+              const createdAt = new Date(pr.created_at);
+              const ageMs = now - createdAt;
+
+              if (ageMs < TWO_HOURS_MS) {
+                const remainingMins = Math.ceil((TWO_HOURS_MS - ageMs) / 60000);
+                console.log(`Skipping PR #${pr.number}: ${remainingMins} minutes until auto-merge`);
+                continue;
+              }
+
+              // Check CI status
+              const { data: checks } = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha
+              });
+
+              const hasFailedChecks = checks.check_runs.some(
+                check => check.status === 'completed' && check.conclusion === 'failure'
+              );
+
+              if (hasFailedChecks) {
+                console.log(`Skipping PR #${pr.number}: CI checks failed`);
+                continue;
+              }
+
+              // Check for blocking reviews
+              const { data: reviews } = await github.rest.pulls.listReviews({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number
+              });
+
+              const hasChangesRequested = reviews.some(
+                review => review.state === 'CHANGES_REQUESTED'
+              );
+
+              if (hasChangesRequested) {
+                console.log(`Skipping PR #${pr.number}: changes requested`);
+                continue;
+              }
+
+              // Merge the PR
+              console.log(`Auto-merging PR #${pr.number}: ${pr.title}`);
+              try {
+                await github.rest.pulls.merge({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  merge_method: 'squash',
+                  commit_title: `${pr.title} (#${pr.number})`,
+                  commit_message: `Auto-merged after 2 hours.\n\n${pr.body || ''}`
+                });
+                console.log(`Successfully merged PR #${pr.number}`);
+              } catch (error) {
+                console.error(`Failed to merge PR #${pr.number}:`, error.message);
+              }
+            }

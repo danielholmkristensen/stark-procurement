@@ -99,15 +99,6 @@ If pending items exist:
 - Task title: "Address feedback: [summary]"
 - Task acceptance: "Feedback resolved, change tracker updated"
 - After addressing: `curl -s -X POST "$FEEDBACK_URL/api/changes/[changeId]/resolve" -H "Content-Type: application/json" -d '{"resolution":"Addressed in this Feature wave","implemented_by":"adapt-agent"}'`
-- Emit screens.updated to notify UI:
-  ```bash
-  curl -s -X POST "$GATEWAY_URL/publish" -H "Content-Type: application/json" -d '{
-    "eventType": "screens.updated",
-    "source": "adapt-agent",
-    "schemaVersion": 1,
-    "payload": { "screenId": "[screenId]", "status": "REVIEW", "message": "Feedback addressed: [summary]" }
-  }'
-  ```
 
 ### Phase 5: Execute Waves
 
@@ -204,7 +195,11 @@ Spawn with `subagent_type: "tk-worker"` (fallback: `"general-purpose"`).
 8. After ALL tasks done:
    a. Append learnings to shared-context-log.md
    b. tk note <Feature-id> "FEATURE COMPLETE: <summary>"
-   c. Create PR: `gh pr create --title "<Feature title>" --body "<summary>"`
+   c. Create release notes: `docs/releases/YYYY-MM-DD-<feature-name>.md`
+   d. Commit release notes: `git add docs/releases/ && git commit -m "docs: add release notes for <feature>"`
+   e. Push to ALL remotes: `./scripts/push-all.sh` (pushes to both dhk + agentic orgs)
+   f. Create PR: `gh pr create --title "<Feature title>" --body "<summary>"`
+   g. PR auto-merges after 2 hours if CI passes and no blocking reviews
 9. If a task cannot be completed:
    a. tk update <task-id> --awaiting escalation
    b. tk note <task-id> "<what's blocking and what was tried>"
