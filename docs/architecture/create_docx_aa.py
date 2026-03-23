@@ -112,24 +112,32 @@ def create_document():
     # INTRODUCTION: OUR APPROACH
     # ═══════════════════════════════════════════════════════════════════════
 
-    h1 = doc.add_heading("Our Approach: Engineering Excellence at Speed", level=1)
+    h1 = doc.add_heading("Our Approach: Agentic Engineering", level=1)
     h1.runs[0].font.color.rgb = AA_BLACK
 
     intro = doc.add_paragraph()
     intro.add_run(
-        "At Agentic Agency, we believe in a fundamental truth: great software comes from great engineering, not from shortcuts. "
-        "We've pioneered a delivery model that combines the speed of modern AI-assisted development with the rigor and quality "
-        "of traditional software craftsmanship. The result is exceptional software delivered in compressed timelines—without compromise."
+        "At Agentic Agency, we practice Agentic Engineering—a fundamentally different approach to software delivery. "
+        "This is not 'AI-assisted development' where humans write code with AI suggestions. This is AI agents "
+        "autonomously executing engineering tasks under human direction and review."
     )
     intro.paragraph_format.space_after = Pt(12)
+
+    intro2 = doc.add_paragraph()
+    intro2.add_run(
+        "The result is engineering excellence at speed: production-grade software with proper architecture, "
+        "comprehensive testing, and maintainable code—delivered in compressed timelines because agents work "
+        "continuously while humans focus on what matters: direction, constraints, and quality gates."
+    )
+    intro2.paragraph_format.space_after = Pt(12)
 
     # Values section
     h2 = doc.add_heading("Our Values", level=2)
     h2.runs[0].font.color.rgb = AA_BLACK
 
     values = [
-        ("Quality Without Compromise", "We write code that you would be proud to show your best engineers. Clean, maintainable, well-tested, and documented."),
-        ("Speed Through Intelligence", "We leverage AI as a force multiplier for skilled engineers—not as a replacement for engineering judgment."),
+        ("Engineering, Not Prompting", "We deliver engineered systems, not prompt-generated artifacts. Architecture, testing, documentation—all first-class concerns."),
+        ("Agents Under Direction", "AI agents execute autonomously within boundaries set by experienced engineers. Human judgment shapes every deliverable."),
         ("Transparency in Execution", "You see everything we build, as we build it. No black boxes. No surprises."),
         ("Partnership Over Transaction", "We succeed when you succeed. Our goal is a long-term relationship, not a one-off sale."),
     ]
@@ -255,17 +263,18 @@ def create_document():
 
     ae_intro = doc.add_paragraph()
     ae_intro.add_run(
-        "Agentic Engineering is neither low-code, nor vibecoding, nor traditional development. "
-        "It represents a new paradigm where AI augments—rather than replaces—expert human judgment."
+        "Agentic Engineering is neither low-code, nor vibecoding, nor AI-assisted development. "
+        "It is a new paradigm where AI agents autonomously execute engineering tasks—writing code, running tests, "
+        "fixing bugs, documenting decisions—while humans provide direction, constraints, and quality review."
     )
     ae_intro.paragraph_format.space_after = Pt(12)
 
     ae_core = doc.add_paragraph()
     ae_core.add_run("The Core Principle: ").bold = True
     ae_core.add_run(
-        "Skilled engineers remain in the loop at every decision point. AI handles the mechanical aspects of code generation, "
-        "pattern matching, and documentation—freeing engineers to focus on architecture, edge cases, security, and the "
-        "nuanced decisions that determine software quality."
+        "Agents do the work. Humans set the direction. Engineers define architecture, acceptance criteria, and quality gates. "
+        "Agents execute autonomously within those boundaries—working in parallel, around the clock, with full persistence "
+        "of context and decisions across sessions."
     )
     ae_core.paragraph_format.space_after = Pt(16)
 
@@ -312,8 +321,8 @@ def create_document():
 
     adapt_desc = doc.add_paragraph()
     adapt_desc.add_run(
-        "ADAPT is a methodology for AI-assisted software delivery that ensures knowledge compounds across sessions, "
-        "quality is enforced through test-gated tasks, and work is structured for maximum parallelization."
+        "ADAPT is our methodology for Agentic Engineering: knowledge compounds across sessions, "
+        "quality is enforced through test-gated tasks, and work is structured for maximum agent parallelization."
     )
     adapt_desc.paragraph_format.space_after = Pt(12)
 
