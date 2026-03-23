@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
 STARK Procurement Scope Document — Word Generator
-Creates an on-brand document in Agentic Agency style (Off-white/Cement palette)
+Agentic Agency editorial style: sharp, precise, commanding
 """
 
 from docx import Document
-from docx.shared import Inches, Pt, RGBColor
+from docx.shared import Inches, Pt, RGBColor, Twips
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -13,16 +13,16 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 import os
 
-# Output path
 OUTPUT_PATH = "/Users/dhk/Projects/STARK_Procurement/app/docs/STARK_Procurement_Scope_Document_Kim_Christensen.docx"
 
 # Agentic Agency Brand Colors - LIGHT THEME
 AA_BLACK = RGBColor(0x00, 0x00, 0x00)
-AA_CEMENT = RGBColor(0xE6, 0xE6, 0xE1)  # Off-white/cream - primary background
-AA_CEMENT_DARK = RGBColor(0xD0, 0xD0, 0xCB)  # Slightly darker cement for contrast
+AA_CEMENT = RGBColor(0xE6, 0xE6, 0xE1)
+AA_CEMENT_DARK = RGBColor(0xD0, 0xD0, 0xCB)
 AA_DARK_GRAY = RGBColor(0x33, 0x33, 0x33)
 AA_MID_GRAY = RGBColor(0x66, 0x66, 0x66)
 AA_LIGHT_GRAY = RGBColor(0x99, 0x99, 0x99)
+
 
 def set_cell_shading(cell, color_hex):
     """Set cell background color"""
@@ -30,40 +30,164 @@ def set_cell_shading(cell, color_hex):
     shading_elm.set(qn('w:fill'), color_hex)
     cell._tc.get_or_add_tcPr().append(shading_elm)
 
-def add_horizontal_line(doc):
-    """Add a horizontal line using paragraph border"""
-    p = doc.add_paragraph()
-    p.paragraph_format.space_before = Pt(18)
-    p.paragraph_format.space_after = Pt(18)
 
-    # Add bottom border to paragraph
+def add_section_break(doc):
+    """Add elegant section break with spacing"""
+    p = doc.add_paragraph()
+    p.paragraph_format.space_before = Pt(24)
+    p.paragraph_format.space_after = Pt(24)
+
     pPr = p._p.get_or_add_pPr()
     pBdr = OxmlElement('w:pBdr')
     bottom = OxmlElement('w:bottom')
     bottom.set(qn('w:val'), 'single')
-    bottom.set(qn('w:sz'), '6')  # 1/8 pt units, so 6 = 0.75pt
+    bottom.set(qn('w:sz'), '4')
     bottom.set(qn('w:space'), '1')
-    bottom.set(qn('w:color'), '999999')
+    bottom.set(qn('w:color'), 'CCCCCC')
     pBdr.append(bottom)
     pPr.append(pBdr)
 
+
+def add_pull_quote(doc, text):
+    """Add a visually distinct pull quote"""
+    p = doc.add_paragraph()
+    p.paragraph_format.space_before = Pt(18)
+    p.paragraph_format.space_after = Pt(18)
+    p.paragraph_format.left_indent = Inches(0.5)
+    p.paragraph_format.right_indent = Inches(0.5)
+
+    # Left border
+    pPr = p._p.get_or_add_pPr()
+    pBdr = OxmlElement('w:pBdr')
+    left = OxmlElement('w:left')
+    left.set(qn('w:val'), 'single')
+    left.set(qn('w:sz'), '24')
+    left.set(qn('w:space'), '12')
+    left.set(qn('w:color'), '000000')
+    pBdr.append(left)
+    pPr.append(pBdr)
+
+    run = p.add_run(text)
+    run.font.size = Pt(13)
+    run.font.italic = True
+    run.font.color.rgb = AA_DARK_GRAY
+
+
+def add_body(doc, text, space_after=8):
+    """Add body paragraph with proper formatting"""
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(space_after)
+    p.paragraph_format.line_spacing = 1.15
+    run = p.add_run(text)
+    run.font.size = Pt(11)
+    run.font.name = "Arial"
+    run.font.color.rgb = AA_BLACK
+    return p
+
+
+def add_lead(doc, text):
+    """Add lead paragraph - slightly larger, sets the tone"""
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(14)
+    p.paragraph_format.line_spacing = 1.2
+    run = p.add_run(text)
+    run.font.size = Pt(12)
+    run.font.name = "Arial"
+    run.font.color.rgb = AA_DARK_GRAY
+    return p
+
+
+def add_kicker(doc, text):
+    """Add a kicker - small caps label above heading"""
+    p = doc.add_paragraph()
+    p.paragraph_format.space_before = Pt(24)
+    p.paragraph_format.space_after = Pt(4)
+    run = p.add_run(text.upper())
+    run.font.size = Pt(9)
+    run.font.bold = True
+    run.font.color.rgb = AA_MID_GRAY
+    run.font.name = "Arial"
+    # Letter spacing
+    return p
+
+
+def add_h1(doc, text):
+    """Add H1 with proper styling"""
+    h = doc.add_heading(text, level=1)
+    h.paragraph_format.space_before = Pt(0)
+    h.paragraph_format.space_after = Pt(12)
+    for run in h.runs:
+        run.font.color.rgb = AA_BLACK
+        run.font.name = "Arial"
+        run.font.size = Pt(26)
+    return h
+
+
+def add_h2(doc, text):
+    """Add H2 with proper styling"""
+    h = doc.add_heading(text, level=2)
+    h.paragraph_format.space_before = Pt(18)
+    h.paragraph_format.space_after = Pt(8)
+    for run in h.runs:
+        run.font.color.rgb = AA_BLACK
+        run.font.name = "Arial"
+        run.font.size = Pt(16)
+    return h
+
+
+def add_h3(doc, text):
+    """Add H3 with proper styling"""
+    h = doc.add_heading(text, level=3)
+    h.paragraph_format.space_before = Pt(14)
+    h.paragraph_format.space_after = Pt(6)
+    for run in h.runs:
+        run.font.color.rgb = AA_DARK_GRAY
+        run.font.name = "Arial"
+        run.font.size = Pt(13)
+    return h
+
+
+def add_bullet_list(doc, items, indent=0.25):
+    """Add a clean bullet list"""
+    for item in items:
+        p = doc.add_paragraph(style='List Bullet')
+        p.paragraph_format.space_after = Pt(4)
+        p.paragraph_format.left_indent = Inches(indent)
+
+        # Handle bold prefix with colon
+        if ": " in item and not item.startswith(" "):
+            parts = item.split(": ", 1)
+            run = p.runs[0] if p.runs else p.add_run()
+            run.clear()
+            bold_run = p.add_run(parts[0] + ": ")
+            bold_run.bold = True
+            bold_run.font.size = Pt(11)
+            bold_run.font.name = "Arial"
+            reg_run = p.add_run(parts[1])
+            reg_run.font.size = Pt(11)
+            reg_run.font.name = "Arial"
+        else:
+            for run in p.runs:
+                run.font.size = Pt(11)
+                run.font.name = "Arial"
+
+
 def create_document():
-    """Create the full Word document"""
+    """Create the editorial-quality Word document"""
     doc = Document()
 
-    # Set up default styles
+    # Default style
     style = doc.styles['Normal']
-    font = style.font
-    font.name = 'Arial'
-    font.size = Pt(11)
-    font.color.rgb = AA_BLACK
+    style.font.name = 'Arial'
+    style.font.size = Pt(11)
+    style.font.color.rgb = AA_BLACK
+    style.paragraph_format.line_spacing = 1.15
 
-    # ═══════════════════════════════════════════════════════════════════════
+    # ═══════════════════════════════════════════════════════════════════════════
     # TITLE PAGE
-    # ═══════════════════════════════════════════════════════════════════════
+    # ═══════════════════════════════════════════════════════════════════════════
 
-    # Add spacing at top
-    for _ in range(4):
+    for _ in range(5):
         doc.add_paragraph()
 
     # Title
@@ -71,482 +195,284 @@ def create_document():
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = title.add_run("STARK PROCUREMENT")
     run.bold = True
-    run.font.size = Pt(36)
+    run.font.size = Pt(42)
     run.font.color.rgb = AA_BLACK
+    run.font.name = "Arial"
 
     # Subtitle
-    subtitle = doc.add_paragraph()
-    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = subtitle.add_run("Scope Definition Document")
-    run.font.size = Pt(24)
-    run.font.color.rgb = AA_DARK_GRAY
-
-    # Recipient
-    doc.add_paragraph()
-    doc.add_paragraph()
-    recipient = doc.add_paragraph()
-    recipient.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = recipient.add_run("Prepared for Kim Christensen")
-    run.font.size = Pt(16)
+    sub = doc.add_paragraph()
+    sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    sub.paragraph_format.space_before = Pt(8)
+    run = sub.add_run("Scope Definition")
+    run.font.size = Pt(18)
     run.font.color.rgb = AA_MID_GRAY
+    run.font.name = "Arial"
+
+    # Recipient line
+    doc.add_paragraph()
+    recip = doc.add_paragraph()
+    recip.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = recip.add_run("Prepared for Kim Christensen")
+    run.font.size = Pt(12)
+    run.font.color.rgb = AA_LIGHT_GRAY
+    run.font.name = "Arial"
 
     # Date
-    date_para = doc.add_paragraph()
-    date_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = date_para.add_run("March 2026")
-    run.font.size = Pt(14)
-    run.font.color.rgb = AA_MID_GRAY
+    date_p = doc.add_paragraph()
+    date_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = date_p.add_run("March 2026")
+    run.font.size = Pt(12)
+    run.font.color.rgb = AA_LIGHT_GRAY
+    run.font.name = "Arial"
 
-    # Vendor attribution
+    # Footer area
     for _ in range(8):
         doc.add_paragraph()
 
     vendor = doc.add_paragraph()
     vendor.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = vendor.add_run("Delivered by Agentic Agency")
-    run.font.size = Pt(12)
+    run = vendor.add_run("Agentic Agency")
+    run.font.size = Pt(11)
     run.font.color.rgb = AA_MID_GRAY
+    run.font.name = "Arial"
 
     tagline = doc.add_paragraph()
     tagline.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = tagline.add_run("Engineering > Prompting")
     run.italic = True
-    run.font.size = Pt(11)
-    run.font.color.rgb = AA_MID_GRAY
+    run.font.size = Pt(10)
+    run.font.color.rgb = AA_LIGHT_GRAY
+    run.font.name = "Arial"
 
-    # Page break
     doc.add_page_break()
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # INTRODUCTION: OUR APPROACH
-    # ═══════════════════════════════════════════════════════════════════════
+    # ═══════════════════════════════════════════════════════════════════════════
+    # AGENTIC ENGINEERING
+    # ═══════════════════════════════════════════════════════════════════════════
 
-    h1 = doc.add_heading("Our Approach: Agentic Engineering", level=1)
-    h1.runs[0].font.color.rgb = AA_BLACK
+    add_kicker(doc, "Our Approach")
+    add_h1(doc, "Agentic Engineering")
 
-    intro = doc.add_paragraph()
-    intro.add_run(
-        "At Agentic Agency, we practice Agentic Engineering—a fundamentally different approach to software delivery. "
-        "This is not 'AI-assisted development' where humans write code with AI suggestions. This is AI agents "
-        "autonomously executing engineering tasks under human direction and review."
+    add_lead(doc,
+        "This is not AI-assisted development. This is not an engineer with a chatbot. "
+        "This is something fundamentally different."
     )
-    intro.paragraph_format.space_after = Pt(12)
 
-    intro2 = doc.add_paragraph()
-    intro2.add_run(
-        "The result is engineering excellence at speed: production-grade software with proper architecture, "
-        "comprehensive testing, and maintainable code—delivered in compressed timelines because agents work "
-        "continuously while humans focus on what matters: direction, constraints, and quality gates."
+    add_body(doc,
+        "Agentic Engineering inverts the relationship between human and machine. "
+        "AI agents autonomously execute engineering tasks—writing code, running tests, "
+        "debugging failures, documenting decisions—while humans provide direction, "
+        "constraints, and quality review."
     )
-    intro2.paragraph_format.space_after = Pt(12)
 
-    # Values section
-    h2 = doc.add_heading("Our Values", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
+    add_pull_quote(doc, "Agents do the work. Humans set the direction.")
 
-    values = [
-        ("Engineering, Not Prompting", "We deliver engineered systems, not prompt-generated artifacts. Architecture, testing, documentation—all first-class concerns."),
-        ("Agents Under Direction", "AI agents execute autonomously within boundaries set by experienced engineers. Human judgment shapes every deliverable."),
-        ("Transparency in Execution", "You see everything we build, as we build it. No black boxes. No surprises."),
-        ("Partnership Over Transaction", "We succeed when you succeed. Our goal is a long-term relationship, not a one-off sale."),
+    add_body(doc,
+        "The result: production-grade software delivered in compressed timelines. "
+        "Not prototypes. Not demos. Working systems with proper architecture, "
+        "comprehensive testing, and maintainable code."
+    )
+
+    add_section_break(doc)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # THE LANDSCAPE
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    add_kicker(doc, "Context")
+    add_h1(doc, "The Landscape")
+
+    add_lead(doc,
+        "Software delivery approaches sit on a spectrum. Understanding where each falls—"
+        "and where Agentic Engineering differs—clarifies what we offer."
+    )
+
+    add_h2(doc, "Low-Code Platforms")
+    add_body(doc,
+        "Visual, drag-and-drop interfaces that abstract away code. "
+        "Fast for standardized applications. Limited for anything beyond the template. "
+        "Vendor lock-in. Ongoing licensing. Hidden complexity that surfaces at scale."
+    )
+
+    add_h2(doc, "Vibecoding")
+    add_body(doc,
+        "Prompt-driven code generation without engineering judgment. "
+        "The developer \"vibes\" with AI, accepting output with minimal review. "
+        "Fast initial results. Inconsistent quality. Security vulnerabilities. "
+        "Technical debt that compounds. Produces artifacts, not systems."
+    )
+
+    add_h2(doc, "Traditional Development")
+    add_body(doc,
+        "Skilled engineers, established methodologies, deliberate architecture. "
+        "High quality when done well. Time-intensive. Expensive. "
+        "Dependent on scarce talent. Often burdened by process overhead."
+    )
+
+    add_h2(doc, "Agentic Engineering")
+    add_body(doc,
+        "AI agents execute autonomously within boundaries set by experienced engineers. "
+        "Human judgment shapes every deliverable. Agents work in parallel, around the clock, "
+        "with full persistence of context across sessions. Quality enforced through "
+        "test-gated tasks—not hoped for, but guaranteed."
+    )
+
+    add_section_break(doc)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # ADAPT
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    add_kicker(doc, "Methodology")
+    add_h1(doc, "ADAPT")
+
+    add_lead(doc,
+        "Agentic Development with Artifact Persistence & Testing. "
+        "Our methodology for delivering engineered systems at speed."
+    )
+
+    items = [
+        "Agentic: AI agents work autonomously on well-defined tasks. Human engineers set direction, review output, make architectural decisions.",
+        "Development: Real engineering—production-grade code with proper error handling, type safety, and maintainability.",
+        "Artifact: Every decision, lesson, and context persisted in structured knowledge stores. Nothing lost between sessions.",
+        "Persistence: Session continuity through shared context. The next session picks up exactly where this one ends.",
+        "Testing: Test-gated task completion. No task marked done until tests pass. Quality enforced, not hoped for."
     ]
+    add_bullet_list(doc, items)
 
-    for title, desc in values:
-        p = doc.add_paragraph()
-        run = p.add_run(f"{title}: ")
-        run.bold = True
-        p.add_run(desc)
-        p.paragraph_format.space_after = Pt(8)
+    add_section_break(doc)
 
-    add_horizontal_line(doc)
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PRICING
+    # ═══════════════════════════════════════════════════════════════════════════
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # UNDERSTANDING THE LANDSCAPE: DELIVERY APPROACHES
-    # ═══════════════════════════════════════════════════════════════════════
+    add_kicker(doc, "Commercial Model")
+    add_h1(doc, "Fixed Price. No Surprises.")
 
-    h1 = doc.add_heading("Understanding the Landscape: Software Delivery Approaches", level=1)
-    h1.runs[0].font.color.rgb = AA_BLACK
-
-    landscape_intro = doc.add_paragraph()
-    landscape_intro.add_run(
-        "The software development industry offers various approaches to building systems. "
-        "Understanding these approaches—their strengths and limitations—is essential for making informed decisions."
-    )
-    landscape_intro.paragraph_format.space_after = Pt(16)
-
-    # LOW CODE
-    h2 = doc.add_heading("Low-Code Platforms", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    lowcode = doc.add_paragraph()
-    lowcode.add_run("Definition: ").bold = True
-    lowcode.add_run(
-        "Low-code platforms (e.g., OutSystems, Mendix, Power Platform) provide visual, drag-and-drop interfaces "
-        "to build applications. They abstract away underlying code, allowing 'citizen developers' to create software without traditional programming."
-    )
-    lowcode.paragraph_format.space_after = Pt(8)
-
-    lowcode_pros = doc.add_paragraph()
-    lowcode_pros.add_run("Strengths: ").bold = True
-    lowcode_pros.add_run(
-        "Rapid prototyping, reduced need for specialized developers, accessible to non-technical users, "
-        "good for standardized CRUD applications."
-    )
-    lowcode_pros.paragraph_format.space_after = Pt(8)
-
-    lowcode_cons = doc.add_paragraph()
-    lowcode_cons.add_run("Limitations: ").bold = True
-    lowcode_cons.add_run(
-        "Vendor lock-in, limited customization, performance constraints at scale, hidden complexity that surfaces later, "
-        "ongoing licensing costs, difficulty integrating with complex enterprise systems, and often produces code that is "
-        "unmaintainable outside the platform."
-    )
-    lowcode_cons.paragraph_format.space_after = Pt(16)
-
-    # VIBECODING
-    h2 = doc.add_heading("Vibecoding (Prompt-Driven Development)", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    vibe = doc.add_paragraph()
-    vibe.add_run("Definition: ").bold = True
-    vibe.add_run(
-        "Vibecoding refers to the practice of using conversational AI tools (like ChatGPT, Claude, or Cursor) "
-        "to generate code through prompts, without deep understanding of the underlying technology. "
-        "The developer 'vibes' with the AI, accepting generated code with minimal review."
-    )
-    vibe.paragraph_format.space_after = Pt(8)
-
-    vibe_pros = doc.add_paragraph()
-    vibe_pros.add_run("Strengths: ").bold = True
-    vibe_pros.add_run(
-        "Extremely fast initial output, low barrier to entry, can produce working prototypes quickly, "
-        "democratizes access to code generation."
-    )
-    vibe_pros.paragraph_format.space_after = Pt(8)
-
-    vibe_cons = doc.add_paragraph()
-    vibe_cons.add_run("Limitations: ").bold = True
-    vibe_cons.add_run(
-        "Inconsistent quality, security vulnerabilities, lack of architectural coherence, technical debt accumulation, "
-        "difficulty maintaining generated code, hallucinated solutions that don't actually work, no understanding of "
-        "the 'why' behind decisions, and brittleness under real-world conditions. Vibecoding produces artifacts, not systems."
-    )
-    vibe_cons.paragraph_format.space_after = Pt(16)
-
-    # TRADITIONAL DEVELOPMENT
-    h2 = doc.add_heading("Traditional Software Development", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    trad = doc.add_paragraph()
-    trad.add_run("Definition: ").bold = True
-    trad.add_run(
-        "Conventional software engineering with skilled developers, established methodologies (Agile, Scrum, Waterfall), "
-        "code reviews, testing practices, and deliberate architectural decisions. Code is written by humans who understand it."
-    )
-    trad.paragraph_format.space_after = Pt(8)
-
-    trad_pros = doc.add_paragraph()
-    trad_pros.add_run("Strengths: ").bold = True
-    trad_pros.add_run(
-        "High quality when done well, full control, deep understanding of the codebase, maintainability, "
-        "appropriate for complex systems, proven methodologies, transferable skills."
-    )
-    trad_pros.paragraph_format.space_after = Pt(8)
-
-    trad_cons = doc.add_paragraph()
-    trad_cons.add_run("Limitations: ").bold = True
-    trad_cons.add_run(
-        "Time-intensive, expensive, dependent on finding skilled talent, can be slow to adapt, "
-        "often burdened by process overhead, communication gaps between business and technical teams."
-    )
-    trad_cons.paragraph_format.space_after = Pt(16)
-
-    add_horizontal_line(doc)
-
-    # ═══════════════════════════════════════════════════════════════════════
-    # AGENTIC ENGINEERING: OUR APPROACH
-    # ═══════════════════════════════════════════════════════════════════════
-
-    h1 = doc.add_heading("Agentic Engineering: A Different Model", level=1)
-    h1.runs[0].font.color.rgb = AA_BLACK
-
-    ae_intro = doc.add_paragraph()
-    ae_intro.add_run(
-        "Agentic Engineering is neither low-code, nor vibecoding, nor AI-assisted development. "
-        "It is a new paradigm where AI agents autonomously execute engineering tasks—writing code, running tests, "
-        "fixing bugs, documenting decisions—while humans provide direction, constraints, and quality review."
-    )
-    ae_intro.paragraph_format.space_after = Pt(12)
-
-    ae_core = doc.add_paragraph()
-    ae_core.add_run("The Core Principle: ").bold = True
-    ae_core.add_run(
-        "Agents do the work. Humans set the direction. Engineers define architecture, acceptance criteria, and quality gates. "
-        "Agents execute autonomously within those boundaries—working in parallel, around the clock, with full persistence "
-        "of context and decisions across sessions."
-    )
-    ae_core.paragraph_format.space_after = Pt(16)
-
-    h2 = doc.add_heading("How Agentic Engineering Differs", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    # Comparison table
-    table = doc.add_table(rows=6, cols=5)
-    table.style = 'Table Grid'
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-
-    headers = ["Aspect", "Low-Code", "Vibecoding", "Traditional", "Agentic Engineering"]
-    for i, header in enumerate(headers):
-        cell = table.rows[0].cells[i]
-        cell.text = header
-        cell.paragraphs[0].runs[0].bold = True
-        set_cell_shading(cell, "E6E6E1")
-        cell.paragraphs[0].runs[0].font.color.rgb = AA_BLACK
-
-    data = [
-        ["Speed", "Fast", "Very Fast", "Slow", "Fast"],
-        ["Quality", "Medium", "Low-Variable", "High (if done well)", "High (guaranteed)"],
-        ["Customization", "Limited", "Unlimited (chaotic)", "Full control", "Full control"],
-        ["Maintainability", "Platform-dependent", "Poor", "High", "High"],
-        ["Cost", "Medium + licensing", "Low (initial)", "High", "Competitive"],
-    ]
-
-    for row_idx, row_data in enumerate(data):
-        for col_idx, cell_data in enumerate(row_data):
-            cell = table.rows[row_idx + 1].cells[col_idx]
-            cell.text = cell_data
-            if col_idx == 4:  # Highlight our column
-                cell.paragraphs[0].runs[0].bold = True
-
-    doc.add_paragraph()
-
-    h2 = doc.add_heading("The ADAPT Methodology", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    adapt_intro = doc.add_paragraph()
-    adapt_intro.add_run("ADAPT: ").bold = True
-    adapt_intro.add_run("Agentic Development with Artifact Persistence & Testing")
-    adapt_intro.paragraph_format.space_after = Pt(12)
-
-    adapt_desc = doc.add_paragraph()
-    adapt_desc.add_run(
-        "ADAPT is our methodology for Agentic Engineering: knowledge compounds across sessions, "
-        "quality is enforced through test-gated tasks, and work is structured for maximum agent parallelization."
-    )
-    adapt_desc.paragraph_format.space_after = Pt(12)
-
-    adapt_items = [
-        ("Agentic", "AI agents work autonomously on well-defined tasks within clear boundaries. Human engineers set direction, review output, and make architectural decisions."),
-        ("Development", "Real engineering—not prototyping. Production-grade code with proper error handling, type safety, and maintainability."),
-        ("Artifact", "Every decision, lesson, and context is persisted in structured knowledge stores. Nothing is lost between sessions."),
-        ("Persistence", "Session continuity through shared context logs, lessons learned, and development diaries. The next session picks up exactly where this one left off."),
-        ("Testing", "Test-gated task completion. No task is marked done until tests pass. Quality is enforced, not hoped for."),
-    ]
-
-    for term, desc in adapt_items:
-        p = doc.add_paragraph()
-        run = p.add_run(f"{term}: ")
-        run.bold = True
-        p.add_run(desc)
-        p.paragraph_format.space_after = Pt(6)
-        p.paragraph_format.left_indent = Inches(0.25)
-
-    add_horizontal_line(doc)
-
-    # ═══════════════════════════════════════════════════════════════════════
-    # PRICING CONTEXT
-    # ═══════════════════════════════════════════════════════════════════════
-
-    h1 = doc.add_heading("An Invitation to Experience the Model", level=1)
-    h1.runs[0].font.color.rgb = AA_BLACK
-
-    pricing_intro = doc.add_paragraph()
-    pricing_intro.add_run(
-        "The price point for this engagement reflects a strategic decision, not a market rate. "
-        "We are extending an invitation to experience Agentic Engineering firsthand."
-    )
-    pricing_intro.paragraph_format.space_after = Pt(12)
-
-    pricing_why = doc.add_paragraph()
-    pricing_why.add_run("Why this price? ").bold = True
-    pricing_why.add_run(
-        "Agentic Engineering is a relatively unknown delivery model. Many organizations are skeptical—and rightfully so, "
-        "given the hype and disappointment cycles in technology. We believe the best way to demonstrate the model is to "
-        "deliver results that speak for themselves."
-    )
-    pricing_why.paragraph_format.space_after = Pt(12)
-
-    pricing_not = doc.add_paragraph()
-    pricing_not.add_run("What this is NOT: ").bold = True
-    pricing_not.add_run(
-        "This is not a race to the bottom. We are not undercutting the market to win volume. This price is a one-time "
-        "showcase opportunity—an investment in demonstrating capability and building a reference relationship. "
-        "Future engagements will reflect the true value delivered."
-    )
-    pricing_not.paragraph_format.space_after = Pt(12)
-
-    pricing_get = doc.add_paragraph()
-    pricing_get.add_run("What you get: ").bold = True
-    pricing_get.add_run(
-        "The same quality, rigor, and professionalism as our full-rate engagements. No shortcuts. No reduced scope. "
-        "No junior resources. You receive our best work."
+    add_lead(doc,
+        "We deliver at a fixed price per engagement. Not hourly rates. "
+        "Not time-and-materials. A commitment to a defined scope at a defined price."
     )
 
-    add_horizontal_line(doc)
-
-    # ═══════════════════════════════════════════════════════════════════════
-    # OUR GUARANTEES
-    # ═══════════════════════════════════════════════════════════════════════
-
-    h1 = doc.add_heading("Our Guarantees", level=1)
-    h1.runs[0].font.color.rgb = AA_BLACK
-
-    guarantee_intro = doc.add_paragraph()
-    guarantee_intro.add_run(
-        "We don't ask you to trust our judgment of quality. We ask you to define it."
-    )
-    guarantee_intro.paragraph_format.space_after = Pt(16)
-
-    # Code Quality
-    h2 = doc.add_heading("Code Quality: Show Us Your Standard", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    code_qual = doc.add_paragraph()
-    code_qual.add_run(
-        "Show us examples of what you consider great code—or even beautiful code. It might be from your existing codebase, "
-        "from an open-source project you admire, or from a book you reference. We will study it, understand its patterns, "
-        "and adhere to that standard throughout our delivery."
-    )
-    code_qual.paragraph_format.space_after = Pt(8)
-
-    code_examples = doc.add_paragraph()
-    code_examples.add_run("Examples might include: ").bold = True
-    code_examples.add_run(
-        "A Rails project with clean service objects, a React codebase with excellent component composition, "
-        "a Go service with idiomatic error handling, or documentation-driven development patterns you value."
-    )
-    code_examples.paragraph_format.space_after = Pt(16)
-
-    # Documentation Quality
-    h2 = doc.add_heading("Documentation: Show Us What Impressed You", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    doc_qual = doc.add_paragraph()
-    doc_qual.add_run(
-        "Show us examples of solution architecture documents or technical documentation that made you say 'wow'—regardless "
-        "of the context or industry. We will ADAPT to that standard. If you admire Stripe's API documentation, "
-        "we'll structure ours similarly. If you prefer AWS's well-architected framework style, we'll match it."
-    )
-    doc_qual.paragraph_format.space_after = Pt(16)
-
-    # Delivery Walkthrough
-    h2 = doc.add_heading("Delivery Walkthrough: Full Transparency", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    walkthrough = doc.add_paragraph()
-    walkthrough.add_run(
-        "At the end of our delivery, we will conduct a full one-hour walkthrough with your technical team. "
-        "We will demonstrate that we have strictly delivered within the agreed parameters—no more, no less. "
-        "Every screen, every integration, every business rule will be shown working against real data."
-    )
-    walkthrough.paragraph_format.space_after = Pt(8)
-
-    walkthrough_scope = doc.add_paragraph()
-    walkthrough_scope.add_run(
-        "This document defines those parameters. Everything marked 'IN SCOPE' will be delivered. "
-        "Everything marked 'OUT OF SCOPE' will not be delivered—and we will not charge extra for scope we never agreed to."
+    add_body(doc,
+        "The price for this engagement reflects a strategic decision. "
+        "Agentic Engineering is a delivery model many have not experienced. "
+        "We believe the best demonstration is results that speak for themselves."
     )
 
-    add_horizontal_line(doc)
-
-    # ═══════════════════════════════════════════════════════════════════════
-    # PARTNERSHIP VISION
-    # ═══════════════════════════════════════════════════════════════════════
-
-    h1 = doc.add_heading("Our Aim: Partnership", level=1)
-    h1.runs[0].font.color.rgb = AA_BLACK
-
-    partner_intro = doc.add_paragraph()
-    partner_intro.add_run(
-        "We are not looking for a transaction. We are looking for a partnership."
+    add_pull_quote(doc,
+        "This is not a race to the bottom. This is a one-time showcase opportunity—"
+        "an investment in demonstrating capability."
     )
-    partner_intro.paragraph_format.space_after = Pt(12)
 
-    partner_detail = doc.add_paragraph()
-    partner_detail.add_run(
-        "STARK Group's digital transformation journey spans multiple systems, teams, and years. "
-        "We believe Agentic Engineering can be a valuable capability in that journey—not just for procurement, "
+    add_body(doc,
+        "What you receive: the same quality, rigor, and professionalism as our standard engagements. "
+        "No shortcuts. No reduced scope. Our best work."
+    )
+
+    add_section_break(doc)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # GUARANTEES
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    add_kicker(doc, "Commitment")
+    add_h1(doc, "Our Guarantees")
+
+    add_lead(doc, "We don't ask you to trust our judgment of quality. We ask you to define it.")
+
+    add_h2(doc, "Code Quality")
+    add_body(doc,
+        "Show us what you consider great code—or beautiful code. "
+        "From your codebase, from open source, from a book. "
+        "We study it, understand its patterns, and adhere to that standard."
+    )
+
+    add_h2(doc, "Documentation")
+    add_body(doc,
+        "Show us architecture documents or technical writing that impressed you. "
+        "Regardless of context or industry. We adapt to that standard. "
+        "Stripe's API docs. AWS Well-Architected. Whatever made you say \"this is how it should be done.\""
+    )
+
+    add_h2(doc, "Delivery Walkthrough")
+    add_body(doc,
+        "At completion: a full one-hour walkthrough with your technical team. "
+        "We demonstrate strict adherence to agreed parameters. "
+        "Every screen. Every integration. Every business rule. Working against real data."
+    )
+
+    add_section_break(doc)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PARTNERSHIP
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    add_kicker(doc, "Vision")
+    add_h1(doc, "Partnership")
+
+    add_lead(doc, "We are not looking for a transaction. We are looking for a partnership.")
+
+    add_body(doc,
+        "STARK Group's digital transformation spans multiple systems, teams, and years. "
+        "We believe Agentic Engineering can serve that journey—not just for procurement, "
         "but across the portfolio. This engagement is an opportunity for both parties to evaluate fit."
     )
-    partner_detail.paragraph_format.space_after = Pt(12)
 
-    partner_success = doc.add_paragraph()
-    partner_success.add_run("Success for us means: ").bold = True
-    partner_success.add_run(
-        "You complete this project with confidence in our capability, with a system you're proud of, "
-        "and with the desire to continue working together."
+    add_pull_quote(doc,
+        "Success: you complete this project confident in our capability, "
+        "proud of the system, and wanting to continue."
     )
 
     doc.add_page_break()
 
-    # ═══════════════════════════════════════════════════════════════════════
-    # SCOPE DEFINITION BEGINS
-    # ═══════════════════════════════════════════════════════════════════════
+    # ═══════════════════════════════════════════════════════════════════════════
+    # SCOPE DEFINITION
+    # ═══════════════════════════════════════════════════════════════════════════
 
-    h1 = doc.add_heading("Scope Definition: STARK Procurement", level=1)
-    h1.runs[0].font.color.rgb = AA_BLACK
+    add_kicker(doc, "Scope Definition")
+    add_h1(doc, "STARK Procurement")
 
-    scope_intro = doc.add_paragraph()
-    scope_intro.add_run("Document Purpose: ").bold = True
-    scope_intro.add_run("Vendor-ready, MECE scope definition for fixed-price delivery")
+    meta = doc.add_paragraph()
+    meta.paragraph_format.space_after = Pt(16)
+    run = meta.add_run("Version 1.0  •  March 2026  •  For Discussion")
+    run.font.size = Pt(10)
+    run.font.color.rgb = AA_LIGHT_GRAY
+    run.font.name = "Arial"
 
-    scope_version = doc.add_paragraph()
-    scope_version.add_run("Version: ").bold = True
-    scope_version.add_run("1.0 DRAFT | Status: For Discussion")
-
-    add_horizontal_line(doc)
+    add_section_break(doc)
 
     # EXECUTIVE SUMMARY
-    h2 = doc.add_heading("Executive Summary", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
+    add_h2(doc, "Executive Summary")
 
-    h3 = doc.add_heading("What We Are Building", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
-    building = doc.add_paragraph()
-    building.add_run(
-        "A Procurement System that handles the complete Purchase-to-Pay workflow for STARK Group Denmark:"
+    add_h3(doc, "What We Build")
+    add_body(doc,
+        "A Procurement System handling the complete Purchase-to-Pay workflow for STARK Group Denmark."
     )
-    building.paragraph_format.space_after = Pt(8)
 
     flow = doc.add_paragraph()
-    flow.add_run("PR Ingestion → PO Generation → Supplier Communication → Invoice Matching → Approval")
     flow.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    flow.runs[0].bold = True
-    flow.paragraph_format.space_after = Pt(16)
+    flow.paragraph_format.space_before = Pt(12)
+    flow.paragraph_format.space_after = Pt(12)
+    run = flow.add_run("PR Ingestion → PO Generation → Supplier Communication → Invoice Matching → Approval")
+    run.bold = True
+    run.font.size = Pt(11)
+    run.font.name = "Arial"
 
-    h3 = doc.add_heading("What We Are NOT Building", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
+    add_h3(doc, "What We Do Not Build")
     not_building = [
         "Warehouse Management (NYCE team)",
         "Financial Accounting (SAP Finance team)",
         "E-commerce Platform (ECom team)",
         "Demand Planning (Relex team)",
-        "Contract Management (Icertis team)",
+        "Contract Management (Icertis team)"
     ]
+    add_bullet_list(doc, not_building)
 
-    for item in not_building:
-        p = doc.add_paragraph(item, style='List Bullet')
-        p.paragraph_format.space_after = Pt(4)
-
-    # Scale table
-    h3 = doc.add_heading("Scale", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
+    add_h3(doc, "Scale")
 
     scale_table = doc.add_table(rows=6, cols=2)
     scale_table.style = 'Table Grid'
-
     scale_data = [
         ("Metric", "Annual Volume"),
         ("Purchase Orders", "750,000"),
@@ -555,371 +481,209 @@ def create_document():
         ("Branches", "84"),
         ("System Users", "30 procurement staff"),
     ]
-
     for row_idx, (col1, col2) in enumerate(scale_data):
         scale_table.rows[row_idx].cells[0].text = col1
         scale_table.rows[row_idx].cells[1].text = col2
+        for cell in scale_table.rows[row_idx].cells:
+            for p in cell.paragraphs:
+                for run in p.runs:
+                    run.font.size = Pt(10)
+                    run.font.name = "Arial"
         if row_idx == 0:
-            scale_table.rows[row_idx].cells[0].paragraphs[0].runs[0].bold = True
-            scale_table.rows[row_idx].cells[1].paragraphs[0].runs[0].bold = True
-            set_cell_shading(scale_table.rows[row_idx].cells[0], "E6E6E1")
-            set_cell_shading(scale_table.rows[row_idx].cells[1], "E6E6E1")
-            scale_table.rows[row_idx].cells[0].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
-            scale_table.rows[row_idx].cells[1].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
+            for cell in scale_table.rows[row_idx].cells:
+                set_cell_shading(cell, "E6E6E1")
+                for p in cell.paragraphs:
+                    for run in p.runs:
+                        run.bold = True
 
     doc.add_paragraph()
-    add_horizontal_line(doc)
+    add_section_break(doc)
 
     # USERS & ROLES
-    h2 = doc.add_heading("Users & Roles", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
+    add_h2(doc, "Users & Roles")
 
-    h3 = doc.add_heading("User Population", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
+    add_h3(doc, "Population")
     users_table = doc.add_table(rows=4, cols=3)
     users_table.style = 'Table Grid'
-
     users_data = [
-        ("Role", "Count (est.)", "Primary Function"),
+        ("Role", "Count", "Primary Function"),
         ("Buyer", "~20", "PR review, PO creation, bundling, invoice matching"),
         ("Approver", "~8", "PO approval, invoice approval, exception handling"),
         ("Admin", "~2", "System configuration, user support, reporting"),
     ]
-
     for row_idx, row_data in enumerate(users_data):
         for col_idx, cell_data in enumerate(row_data):
             users_table.rows[row_idx].cells[col_idx].text = cell_data
-            if row_idx == 0:
-                users_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(users_table.rows[row_idx].cells[col_idx], "E6E6E1")
-                users_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
+            for p in users_table.rows[row_idx].cells[col_idx].paragraphs:
+                for run in p.runs:
+                    run.font.size = Pt(10)
+                    run.font.name = "Arial"
+        if row_idx == 0:
+            for cell in users_table.rows[row_idx].cells:
+                set_cell_shading(cell, "E6E6E1")
+                for p in cell.paragraphs:
+                    for run in p.runs:
+                        run.bold = True
 
     doc.add_paragraph()
 
-    # Role definitions
-    h3 = doc.add_heading("Role Definitions", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
+    add_h3(doc, "Role Definitions")
     roles = [
-        ("Buyer", "Day-to-day procurement operations. Reviews PRs, creates/sends POs, matches invoices, resolves discrepancies within tolerance. Cannot approve above their personal authority limit."),
-        ("Approver", "Decision authority for high-value transactions. Approves POs and invoices above threshold. Handles escalated discrepancies. May also perform Buyer functions."),
-        ("Admin", "System configuration and support. Manages thresholds, supplier preferences, cut-off times, user authority limits, and delegations. No transactional authority beyond Approver role."),
+        "Buyer: Day-to-day operations. Reviews PRs, creates POs, matches invoices, resolves discrepancies within tolerance. Cannot approve above personal authority limit.",
+        "Approver: Decision authority for high-value transactions. Approves POs and invoices above threshold. Handles escalations. May perform Buyer functions.",
+        "Admin: System configuration. Manages thresholds, supplier preferences, authority limits, delegations. No transactional authority beyond Approver role."
     ]
+    add_bullet_list(doc, roles)
 
-    for role, desc in roles:
-        p = doc.add_paragraph()
-        run = p.add_run(f"{role}: ")
-        run.bold = True
-        p.add_run(desc)
-        p.paragraph_format.space_after = Pt(8)
-
-    add_horizontal_line(doc)
+    add_section_break(doc)
 
     # DOMAIN STRUCTURE
-    h2 = doc.add_heading("Scope Structure", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
+    add_h2(doc, "Scope Structure")
 
-    scope_struct = doc.add_paragraph()
-    scope_struct.add_run("This document defines scope across 5 mutually exclusive domains:")
-    scope_struct.paragraph_format.space_after = Pt(12)
+    add_body(doc, "Five mutually exclusive domains. For each: IN (we deliver), OUT (others own), BOUNDARY (handoff point).")
 
     domains = [
-        ("Domain 1: User Interface", "Screens, components, interactions"),
-        ("Domain 2: Business Logic", "Rules, calculations, workflows"),
-        ("Domain 3: Data Layer", "Storage, queries, synchronization"),
-        ("Domain 4: Integrations", "Inbound data, outbound data, APIs"),
-        ("Domain 5: Operations", "Infrastructure, deployment, monitoring"),
+        "User Interface: 16 screens, components, interactions",
+        "Business Logic: Rules, calculations, workflows",
+        "Data Layer: Storage, queries, synchronization",
+        "Integrations: Kafka consumers/producers, REST fallback, events",
+        "Operations: Infrastructure, deployment, monitoring"
     ]
+    add_bullet_list(doc, domains)
 
-    for domain, desc in domains:
-        p = doc.add_paragraph()
-        run = p.add_run(f"{domain}: ")
-        run.bold = True
-        p.add_run(desc)
-        p.paragraph_format.space_after = Pt(6)
+    add_section_break(doc)
 
-    scope_method = doc.add_paragraph()
-    scope_method.add_run("\nFor each domain, we define:")
-    scope_method.paragraph_format.space_after = Pt(8)
+    # SCREENS
+    add_h2(doc, "User Interface")
 
-    for item in ["IN — We build, we own, we deliver", "OUT — Someone else owns, we don't touch", "BOUNDARY — Exact handoff point"]:
-        p = doc.add_paragraph(item, style='List Bullet')
-        p.paragraph_format.space_after = Pt(4)
-
-    add_horizontal_line(doc)
-
-    # DOMAIN 1: USER INTERFACE
-    h2 = doc.add_heading("Domain 1: User Interface", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    h3 = doc.add_heading("1.1 Screens — IN SCOPE", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
+    add_h3(doc, "16 Screens — In Scope")
 
     screens_table = doc.add_table(rows=17, cols=3)
     screens_table.style = 'Table Grid'
-
     screens_data = [
-        ("Screen ID", "Name", "Purpose"),
-        ("A1", "PR Inbox", "View and manage incoming purchase requests"),
+        ("ID", "Name", "Purpose"),
+        ("A1", "PR Inbox", "Incoming purchase requests"),
         ("A2", "PR Detail", "Individual PR with line items"),
-        ("B1", "PO List", "View and manage purchase orders"),
-        ("B2", "PO Detail", "Individual PO with supplier, items, status"),
-        ("B3", "PO Kanban", "Visual pipeline (Draft → Sent → Confirmed → Received)"),
+        ("B1", "PO List", "Purchase orders overview"),
+        ("B2", "PO Detail", "Individual PO with full details"),
+        ("B3", "PO Kanban", "Visual pipeline view"),
         ("C1", "Bundling Workspace", "Group PRs into optimized POs"),
-        ("D1", "Invoice List", "View and manage supplier invoices"),
-        ("D2", "Invoice Detail", "Individual invoice with matching status"),
-        ("D3", "Match Results", "Side-by-side PO vs Invoice comparison"),
-        ("D4", "Discrepancy Queue", "Invoices requiring manual resolution"),
+        ("D1", "Invoice List", "Supplier invoices overview"),
+        ("D2", "Invoice Detail", "Individual invoice with matching"),
+        ("D3", "Match Results", "PO vs Invoice comparison"),
+        ("D4", "Discrepancy Queue", "Invoices requiring resolution"),
         ("E1", "Approval Queue", "Items awaiting approval"),
-        ("E2", "Approval History", "Audit trail of decisions"),
+        ("E2", "Approval History", "Decision audit trail"),
         ("F1", "Supplier List", "Supplier master data"),
-        ("F2", "Supplier Detail", "Individual supplier with performance"),
-        ("G1", "Dashboard", "Morning briefing, action items, KPIs"),
+        ("F2", "Supplier Detail", "Individual supplier profile"),
+        ("G1", "Dashboard", "Morning briefing, KPIs, action items"),
         ("H1", "Settings", "User preferences, thresholds"),
     ]
-
     for row_idx, row_data in enumerate(screens_data):
         for col_idx, cell_data in enumerate(row_data):
             screens_table.rows[row_idx].cells[col_idx].text = cell_data
-            if row_idx == 0:
-                screens_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(screens_table.rows[row_idx].cells[col_idx], "E6E6E1")
-                screens_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
+            for p in screens_table.rows[row_idx].cells[col_idx].paragraphs:
+                for run in p.runs:
+                    run.font.size = Pt(10)
+                    run.font.name = "Arial"
+        if row_idx == 0:
+            for cell in screens_table.rows[row_idx].cells:
+                set_cell_shading(cell, "E6E6E1")
+                for p in cell.paragraphs:
+                    for run in p.runs:
+                        run.bold = True
 
-    total_screens = doc.add_paragraph()
-    total_screens.add_run("\nTotal: 16 screens")
-    total_screens.runs[0].bold = True
+    doc.add_paragraph()
+    add_section_break(doc)
 
-    add_horizontal_line(doc)
+    # INTEGRATIONS
+    add_h2(doc, "Integrations")
 
-    # DOMAIN 2: BUSINESS LOGIC
-    h2 = doc.add_heading("Domain 2: Business Logic", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    h3 = doc.add_heading("2.1 PR Processing — IN SCOPE", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
-    pr_rules = [
-        ("PR Validation", "Validate incoming PR data — Required fields present, valid supplier ID, positive quantities"),
-        ("PR Deduplication", "Detect duplicate PRs — Same source + reference = reject with 409"),
-        ("Source Routing", "Handle PR differently by source — Relex: batch at cut-off, ECom: immediate, SalesApp: per timing field"),
-        ("Urgency Calculation", "Assign escalation level — Based on value, age, need-by date"),
-    ]
-
-    for rule, desc in pr_rules:
-        p = doc.add_paragraph()
-        run = p.add_run(f"{rule}: ")
-        run.bold = True
-        p.add_run(desc)
-        p.paragraph_format.space_after = Pt(6)
-
-    h3 = doc.add_heading("2.2 PO Generation — IN SCOPE", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
-    po_rules = [
-        ("Single PR → PO", "Convert one PR to one PO — 1:1 mapping, all line items transferred"),
-        ("Bundling", "Combine PRs into one PO — Same supplier + same location + compatible timing"),
-        ("Packet Specification", "Mark items per-PR in bundled PO — Supplier receives clear picking instructions"),
-        ("Cut-off Timing", "Send PO at supplier cut-off — Configurable per supplier, default to immediate"),
-    ]
-
-    for rule, desc in po_rules:
-        p = doc.add_paragraph()
-        run = p.add_run(f"{rule}: ")
-        run.bold = True
-        p.add_run(desc)
-        p.paragraph_format.space_after = Pt(6)
-
-    h3 = doc.add_heading("2.5 Invoice Matching — IN SCOPE", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
-    inv_rules = [
-        ("2-Way Match", "Compare Invoice to PO — Match on PO number, line items, quantities, prices"),
-        ("Tolerance Rules", "Allow minor variances — Qty: ±2%, Price: ±1%, Total: ±DKK 100"),
-        ("Discrepancy Detection", "Flag mismatches — Qty mismatch, price mismatch, missing PO"),
-        ("Auto-Approve", "Pass matching invoices — Full match within tolerance = auto-approve"),
-    ]
-
-    for rule, desc in inv_rules:
-        p = doc.add_paragraph()
-        run = p.add_run(f"{rule}: ")
-        run.bold = True
-        p.add_run(desc)
-        p.paragraph_format.space_after = Pt(6)
-
-    add_horizontal_line(doc)
-
-    # DOMAIN 4: INTEGRATIONS
-    h2 = doc.add_heading("Domain 4: Integrations", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    int_arch = doc.add_paragraph()
-    int_arch.add_run("Architecture Decision: ").bold = True
-    int_arch.add_run(
-        "Kafka-native integration with per-source/per-consumer topic modularity. "
-        "REST fallback for sources that cannot use Kafka. Customer provisions topics in existing STARK Kafka cluster; "
-        "vendor delivers specs and consumer/producer code."
+    add_body(doc,
+        "Kafka-native architecture. Per-source inbound topics. Per-channel outbound topics. "
+        "REST fallback for non-Kafka sources. Customer provisions topics; we deliver specs and code."
     )
-    int_arch.paragraph_format.space_after = Pt(12)
 
-    h3 = doc.add_heading("4.2 Inbound: PR Sources — IN SCOPE", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
-    inbound_table = doc.add_table(rows=5, cols=3)
-    inbound_table.style = 'Table Grid'
-
-    inbound_data = [
-        ("Source", "Topic", "Consumer"),
-        ("Relex", "stark.procurement.inbound.prs.relex", "PRRelexConsumer"),
-        ("ECom", "stark.procurement.inbound.prs.ecom", "PREComConsumer"),
-        ("SalesApp", "stark.procurement.inbound.prs.salesapp", "PRSalesAppConsumer"),
-        ("Aspect4", "stark.procurement.inbound.pos.aspect4", "POAspect4Consumer"),
+    add_h3(doc, "Inbound Sources")
+    inbound = [
+        "Relex: stark.procurement.inbound.prs.relex",
+        "ECom: stark.procurement.inbound.prs.ecom",
+        "SalesApp: stark.procurement.inbound.prs.salesapp",
+        "Aspect4: stark.procurement.inbound.pos.aspect4"
     ]
+    add_bullet_list(doc, inbound)
 
-    for row_idx, row_data in enumerate(inbound_data):
-        for col_idx, cell_data in enumerate(row_data):
-            inbound_table.rows[row_idx].cells[col_idx].text = cell_data
-            if row_idx == 0:
-                inbound_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(inbound_table.rows[row_idx].cells[col_idx], "E6E6E1")
-                inbound_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
-
-    doc.add_paragraph()
-
-    h3 = doc.add_heading("4.3 Outbound: Supplier Communication — IN SCOPE", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
-    outbound_table = doc.add_table(rows=4, cols=3)
-    outbound_table.style = 'Table Grid'
-
-    outbound_data = [
-        ("Channel", "Topic", "Consumer"),
-        ("EDI", "stark.procurement.outbound.pos.edi", "EDI Gateway / Stark Output"),
-        ("Email", "stark.procurement.outbound.pos.email", "Stark Output"),
-        ("Portal", "stark.procurement.outbound.pos.portal", "Supplier Portal (future)"),
+    add_h3(doc, "Outbound Channels")
+    outbound = [
+        "EDI: stark.procurement.outbound.pos.edi",
+        "Email: stark.procurement.outbound.pos.email",
+        "Finance: stark.procurement.outbound.finance.invoices"
     ]
+    add_bullet_list(doc, outbound)
 
-    for row_idx, row_data in enumerate(outbound_data):
-        for col_idx, cell_data in enumerate(row_data):
-            outbound_table.rows[row_idx].cells[col_idx].text = cell_data
-            if row_idx == 0:
-                outbound_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(outbound_table.rows[row_idx].cells[col_idx], "E6E6E1")
-                outbound_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
+    add_section_break(doc)
 
-    doc.add_paragraph()
-    add_horizontal_line(doc)
+    # EXCLUSIONS
+    add_h2(doc, "Explicit Exclusions")
 
-    # EXPLICIT EXCLUSIONS
-    h2 = doc.add_heading("Explicit Exclusions", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    h3 = doc.add_heading("Will NOT Be Delivered", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
-    exclusions_table = doc.add_table(rows=11, cols=3)
-    exclusions_table.style = 'Table Grid'
-
-    exclusions_data = [
-        ("Item", "Reason", "Future Phase"),
-        ("Stock Transfer Orders (STO)", "Requires NYCE WMS", "Phase 2"),
-        ("3-Way Invoice Match", "Requires NYCE goods receipt", "Phase 2"),
-        ("SAP Finance Integration", "Requires SAP Finance live", "Phase 2"),
-        ("Real-time SalesApp Sync", "Requires OMI bidirectional", "Phase 2"),
-        ("Supplier Portal", "Enhancement, not MVP", "Phase 3"),
-        ("AI Email Parsing", "Enhancement, not MVP", "Phase 3"),
-        ("Contract Management", "Requires Icertis", "Phase 3"),
-        ("Mobile Native App", "Enhancement, not MVP", "Phase 3"),
-        ("Multi-language UI", "Enhancement, not MVP", "Phase 3"),
-        ("Advanced Analytics/BI", "Different project", "Never (BI team)"),
+    add_h3(doc, "Not Delivered in This Phase")
+    exclusions = [
+        "Stock Transfer Orders — Requires NYCE WMS (Phase 2)",
+        "3-Way Invoice Match — Requires goods receipt from NYCE (Phase 2)",
+        "SAP Finance Integration — Direct API (Phase 2)",
+        "Supplier Portal — Enhancement (Phase 3)",
+        "Mobile Native App — Enhancement (Phase 3)",
+        "Advanced Analytics/BI — Separate project (BI team)"
     ]
+    add_bullet_list(doc, exclusions)
 
-    for row_idx, row_data in enumerate(exclusions_data):
-        for col_idx, cell_data in enumerate(row_data):
-            exclusions_table.rows[row_idx].cells[col_idx].text = cell_data
-            if row_idx == 0:
-                exclusions_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(exclusions_table.rows[row_idx].cells[col_idx], "E6E6E1")
-                exclusions_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
-
-    doc.add_paragraph()
-
-    h3 = doc.add_heading("Dependencies We Assume Are Ready", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
+    add_h3(doc, "Dependencies Assumed Ready")
     deps = [
-        ("Relex PR feed", "READY — Automated replenishment"),
-        ("ECom PR feed", "READY — Drop-shipment PRs"),
-        ("Stark Output (EDI/Email)", "READY — Cannot send POs to suppliers without this"),
-        ("SSO/IAM", "READY — No user authentication without this"),
-        ("Supplier Master Data", "READY — Via MDM"),
+        "Relex PR feed — Automated replenishment",
+        "ECom PR feed — Drop-shipment PRs",
+        "Stark Output — EDI/Email delivery to suppliers",
+        "SSO/IAM — User authentication",
+        "STARK Kafka cluster — Topic provisioning",
+        "Supplier Master Data — Via MDM"
     ]
+    add_bullet_list(doc, deps)
 
-    for dep, status in deps:
-        p = doc.add_paragraph()
-        run = p.add_run(f"{dep}: ")
-        run.bold = True
-        p.add_run(status)
-        p.paragraph_format.space_after = Pt(6)
+    add_section_break(doc)
 
-    add_horizontal_line(doc)
+    # ACCEPTANCE
+    add_h2(doc, "Acceptance Criteria")
 
-    # ACCEPTANCE CRITERIA
-    h2 = doc.add_heading("Acceptance Criteria Summary", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
-
-    h3 = doc.add_heading("Definition of Done (Per Screen)", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
+    add_h3(doc, "Per Screen")
     screen_criteria = [
-        "Renders correctly on desktop (1280px+)",
-        "Renders correctly on tablet (768px+)",
+        "Renders correctly on desktop (1280px+) and tablet (768px+)",
         "All data loads from backend API",
-        "Loading states shown during fetch",
-        "Error states handled gracefully",
-        "Empty states designed and implemented",
-        "Keyboard navigation works",
-        "Meets WCAG 2.1 AA (basic)",
-        "No console errors",
-        "Passes TypeScript strict mode",
+        "Loading, error, and empty states implemented",
+        "Keyboard navigation functional",
+        "WCAG 2.1 AA compliance (basic)",
+        "No console errors; TypeScript strict mode passes"
     ]
+    add_bullet_list(doc, screen_criteria)
 
-    for item in screen_criteria:
-        p = doc.add_paragraph(f"☐ {item}")
-        p.paragraph_format.space_after = Pt(2)
-
-    h3 = doc.add_heading("Definition of Done (Per Integration)", level=3)
-    h3.runs[0].font.color.rgb = AA_DARK_GRAY
-
+    add_h3(doc, "Per Integration")
     int_criteria = [
-        "API endpoint documented (OpenAPI)",
+        "API documented (OpenAPI)",
         "Request validation implemented",
-        "Error responses follow standard format",
         "Rate limiting configured",
         "Authentication required",
         "Audit logging enabled",
-        "Health check includes dependency",
-        "Retry logic for transient failures",
+        "Retry logic for transient failures"
     ]
+    add_bullet_list(doc, int_criteria)
 
-    for item in int_criteria:
-        p = doc.add_paragraph(f"☐ {item}")
-        p.paragraph_format.space_after = Pt(2)
-
-    add_horizontal_line(doc)
+    add_section_break(doc)
 
     # SIGN-OFF
-    h2 = doc.add_heading("Sign-Off Checklist", level=2)
-    h2.runs[0].font.color.rgb = AA_BLACK
+    add_h2(doc, "Sign-Off")
 
-    signoff_intro = doc.add_paragraph()
-    signoff_intro.add_run("Before final delivery, both parties confirm:")
-    signoff_intro.paragraph_format.space_after = Pt(12)
+    add_body(doc, "Before final delivery, both parties confirm:")
 
     signoff_table = doc.add_table(rows=9, cols=3)
     signoff_table.style = 'Table Grid'
-
     signoff_data = [
         ("Item", "Vendor", "STARK"),
         ("All IN SCOPE items delivered", "☐", "☐"),
@@ -931,14 +695,19 @@ def create_document():
         ("Documentation complete", "☐", "☐"),
         ("Training delivered", "☐", "☐"),
     ]
-
     for row_idx, row_data in enumerate(signoff_data):
         for col_idx, cell_data in enumerate(row_data):
             signoff_table.rows[row_idx].cells[col_idx].text = cell_data
-            if row_idx == 0:
-                signoff_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(signoff_table.rows[row_idx].cells[col_idx], "E6E6E1")
-                signoff_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
+            for p in signoff_table.rows[row_idx].cells[col_idx].paragraphs:
+                for run in p.runs:
+                    run.font.size = Pt(10)
+                    run.font.name = "Arial"
+        if row_idx == 0:
+            for cell in signoff_table.rows[row_idx].cells:
+                set_cell_shading(cell, "E6E6E1")
+                for p in cell.paragraphs:
+                    for run in p.runs:
+                        run.bold = True
 
     doc.add_paragraph()
     doc.add_paragraph()
@@ -946,29 +715,33 @@ def create_document():
     # CLOSING
     closing = doc.add_paragraph()
     closing.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    closing.add_run("— End of Scope Definition —")
-    closing.runs[0].italic = True
-    closing.runs[0].font.color.rgb = AA_MID_GRAY
+    closing.paragraph_format.space_before = Pt(36)
+    run = closing.add_run("—")
+    run.font.size = Pt(14)
+    run.font.color.rgb = AA_LIGHT_GRAY
 
     doc.add_paragraph()
 
-    prepared = doc.add_paragraph()
-    prepared.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    prepared.add_run("Prepared by Agentic Agency")
-    prepared.runs[0].font.size = Pt(10)
-    prepared.runs[0].font.color.rgb = AA_MID_GRAY
+    end = doc.add_paragraph()
+    end.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = end.add_run("Agentic Agency")
+    run.font.size = Pt(10)
+    run.font.color.rgb = AA_MID_GRAY
+    run.font.name = "Arial"
 
     tagline_end = doc.add_paragraph()
     tagline_end.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    tagline_end.add_run("Engineering > Prompting")
-    tagline_end.runs[0].italic = True
-    tagline_end.runs[0].font.size = Pt(10)
-    tagline_end.runs[0].font.color.rgb = AA_MID_GRAY
+    run = tagline_end.add_run("Engineering > Prompting")
+    run.italic = True
+    run.font.size = Pt(9)
+    run.font.color.rgb = AA_LIGHT_GRAY
+    run.font.name = "Arial"
 
     # Save
     doc.save(OUTPUT_PATH)
     print(f"Document saved to: {OUTPUT_PATH}")
     return OUTPUT_PATH
+
 
 if __name__ == "__main__":
     create_document()
