@@ -16,11 +16,13 @@ import os
 # Output path
 OUTPUT_PATH = "/Users/dhk/Projects/STARK_Procurement/app/docs/STARK_Procurement_Scope_Document_Kim_Christensen.docx"
 
-# Agentic Agency Brand Colors
+# Agentic Agency Brand Colors - LIGHT THEME
 AA_BLACK = RGBColor(0x00, 0x00, 0x00)
-AA_CEMENT = RGBColor(0xE6, 0xE6, 0xE1)
+AA_CEMENT = RGBColor(0xE6, 0xE6, 0xE1)  # Off-white/cream - primary background
+AA_CEMENT_DARK = RGBColor(0xD0, 0xD0, 0xCB)  # Slightly darker cement for contrast
 AA_DARK_GRAY = RGBColor(0x33, 0x33, 0x33)
 AA_MID_GRAY = RGBColor(0x66, 0x66, 0x66)
+AA_LIGHT_GRAY = RGBColor(0x99, 0x99, 0x99)
 
 def set_cell_shading(cell, color_hex):
     """Set cell background color"""
@@ -280,8 +282,8 @@ def create_document():
         cell = table.rows[0].cells[i]
         cell.text = header
         cell.paragraphs[0].runs[0].bold = True
-        set_cell_shading(cell, "333333")
-        cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+        set_cell_shading(cell, "E6E6E1")
+        cell.paragraphs[0].runs[0].font.color.rgb = AA_BLACK
 
     data = [
         ["Speed", "Fast", "Very Fast", "Slow", "Fast"],
@@ -536,10 +538,10 @@ def create_document():
         if row_idx == 0:
             scale_table.rows[row_idx].cells[0].paragraphs[0].runs[0].bold = True
             scale_table.rows[row_idx].cells[1].paragraphs[0].runs[0].bold = True
-            set_cell_shading(scale_table.rows[row_idx].cells[0], "333333")
-            set_cell_shading(scale_table.rows[row_idx].cells[1], "333333")
-            scale_table.rows[row_idx].cells[0].paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-            scale_table.rows[row_idx].cells[1].paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+            set_cell_shading(scale_table.rows[row_idx].cells[0], "E6E6E1")
+            set_cell_shading(scale_table.rows[row_idx].cells[1], "E6E6E1")
+            scale_table.rows[row_idx].cells[0].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
+            scale_table.rows[row_idx].cells[1].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
 
     doc.add_paragraph()
     add_horizontal_line(doc)
@@ -566,8 +568,8 @@ def create_document():
             users_table.rows[row_idx].cells[col_idx].text = cell_data
             if row_idx == 0:
                 users_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(users_table.rows[row_idx].cells[col_idx], "333333")
-                users_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+                set_cell_shading(users_table.rows[row_idx].cells[col_idx], "E6E6E1")
+                users_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
 
     doc.add_paragraph()
 
@@ -658,8 +660,8 @@ def create_document():
             screens_table.rows[row_idx].cells[col_idx].text = cell_data
             if row_idx == 0:
                 screens_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(screens_table.rows[row_idx].cells[col_idx], "333333")
-                screens_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+                set_cell_shading(screens_table.rows[row_idx].cells[col_idx], "E6E6E1")
+                screens_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
 
     total_screens = doc.add_paragraph()
     total_screens.add_run("\nTotal: 16 screens")
@@ -756,8 +758,8 @@ def create_document():
             inbound_table.rows[row_idx].cells[col_idx].text = cell_data
             if row_idx == 0:
                 inbound_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(inbound_table.rows[row_idx].cells[col_idx], "333333")
-                inbound_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+                set_cell_shading(inbound_table.rows[row_idx].cells[col_idx], "E6E6E1")
+                inbound_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
 
     doc.add_paragraph()
 
@@ -779,8 +781,8 @@ def create_document():
             outbound_table.rows[row_idx].cells[col_idx].text = cell_data
             if row_idx == 0:
                 outbound_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(outbound_table.rows[row_idx].cells[col_idx], "333333")
-                outbound_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+                set_cell_shading(outbound_table.rows[row_idx].cells[col_idx], "E6E6E1")
+                outbound_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
 
     doc.add_paragraph()
     add_horizontal_line(doc)
@@ -814,8 +816,8 @@ def create_document():
             exclusions_table.rows[row_idx].cells[col_idx].text = cell_data
             if row_idx == 0:
                 exclusions_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(exclusions_table.rows[row_idx].cells[col_idx], "333333")
-                exclusions_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+                set_cell_shading(exclusions_table.rows[row_idx].cells[col_idx], "E6E6E1")
+                exclusions_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
 
     doc.add_paragraph()
 
@@ -911,8 +913,8 @@ def create_document():
             signoff_table.rows[row_idx].cells[col_idx].text = cell_data
             if row_idx == 0:
                 signoff_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].bold = True
-                set_cell_shading(signoff_table.rows[row_idx].cells[col_idx], "333333")
-                signoff_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+                set_cell_shading(signoff_table.rows[row_idx].cells[col_idx], "E6E6E1")
+                signoff_table.rows[row_idx].cells[col_idx].paragraphs[0].runs[0].font.color.rgb = AA_BLACK
 
     doc.add_paragraph()
     doc.add_paragraph()
