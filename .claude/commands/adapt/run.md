@@ -84,21 +84,58 @@ Find the `shared-context-log.md` path from the Feature descriptions. Read it —
 Proceeding with execution...
 ```
 
+### Phase 4.5: Check for Pending Feedback
+
+Before executing, poll the Command Center for unresolved feedback:
+
+```bash
+GATEWAY_URL="${KAFKA_GATEWAY_URL:-http://localhost:8083}"
+FEEDBACK_URL="${CHANGE_TRACKER_URL:-http://localhost:3002}"
+curl -s "$FEEDBACK_URL/api/agent/pending-feedback?projectId=stark-procurement" | head -100
+```
+
+If pending items exist:
+- For each item matching a Feature in the current wave → inject as an additional Task
+- Task title: "Address feedback: [summary]"
+- Task acceptance: "Feedback resolved, change tracker updated"
+- After addressing: `curl -s -X POST "$FEEDBACK_URL/api/changes/[changeId]/resolve" -H "Content-Type: application/json" -d '{"resolution":"Addressed in this Feature wave","implemented_by":"adapt-agent"}'`
+
 ### Phase 5: Execute Waves
 
 ```
 FOR each wave:
   1. Gather all Features in this wave
-  2. For each Feature:
+  2. Emit wave start event:
+     curl -s -X POST "$GATEWAY_URL/publish" -H "Content-Type: application/json" -d '{
+       "eventType": "agents.status",
+       "source": "adapt-agent",
+       "schemaVersion": 1,
+       "payload": { "sessionId": "'$SESSION_ID'", "status": "coding", "currentTool": "adapt:run" }
+     }'
+  3. For each Feature:
      a. Gather ordered tasks: tk list --parent <Feature-id> --json
      b. Create feature branch: git checkout -b feature/YYYY-MM-DD-<feature-name> main
      c. Push branch: git push -u origin feature/YYYY-MM-DD-<feature-name>
-  3. Spawn one subagent per Feature — ALL in a SINGLE message (parallel)
+     d. Emit Feature started:
+        curl -s -X POST "$GATEWAY_URL/publish" -H "Content-Type: application/json" -d '{
+          "eventType": "agents.progress",
+          "source": "adapt-agent",
+          "schemaVersion": 1,
+          "payload": { "sessionId": "'$SESSION_ID'", "taskId": "<Feature-id>", "progress": 0, "stage": "feature-started", "message": "Starting: <Feature-title>", "startedAt": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'" }
+        }'
+  4. Spawn one subagent per Feature — ALL in a SINGLE message (parallel)
      Include feature branch name in worker prompt
-  4. Wait for all subagents to complete
-  5. Collect results, update status
-  6. Report wave results
-  7. Proceed to next wave
+  5. Wait for all subagents to complete
+  6. For each completed Feature, emit Feature completed:
+     curl -s -X POST "$GATEWAY_URL/publish" -H "Content-Type: application/json" -d '{
+       "eventType": "agents.progress",
+       "source": "adapt-agent",
+       "schemaVersion": 1,
+       "payload": { "sessionId": "'$SESSION_ID'", "taskId": "<Feature-id>", "progress": 1, "stage": "feature-completed", "message": "Completed: <Feature-title>", "startedAt": "'$FEATURE_START'" }
+     }'
+  7. Collect results, update status
+  8. Report wave results
+  9. Proceed to next wave
 ```
 
 **CRITICAL: Launch all Feature workers in a wave in a SINGLE message with multiple Task tool calls.**
@@ -152,7 +189,9 @@ Spawn with `subagent_type: "tk-worker"` (fallback: `"general-purpose"`).
    d. Write tests alongside implementation
    e. Run acceptance criteria. Fix and re-run until green
    f. Commit: `git commit -m "[TASK-ID] <what was done>"`
-   g. tk close <task-id> --reason "<summary>"
+   g. Emit task completed to Command Center:
+      `curl -s -X POST "${KAFKA_GATEWAY_URL:-http://localhost:8083}/publish" -H "Content-Type: application/json" -d '{"eventType":"agents.progress","source":"adapt-agent","schemaVersion":1,"payload":{"sessionId":"'$SESSION_ID'","taskId":"<task-id>","progress":<N/total>,"stage":"task-completed","message":"<summary>","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}'`
+   h. tk close <task-id> --reason "<summary>"
 8. After ALL tasks done:
    a. Append learnings to shared-context-log.md
    b. tk note <Feature-id> "FEATURE COMPLETE: <summary>"

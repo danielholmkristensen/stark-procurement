@@ -295,3 +295,25 @@ Follow-up tasks created: <list or "none">
 ```
 
 **Write the report to `docs/devmeta/reflections/iteration-<N>.md`** so it persists as a permanent record.
+
+### Step 13: Emit I&A Cycle Completion to Command Center
+
+```bash
+GATEWAY_URL="${KAFKA_GATEWAY_URL:-http://localhost:8083}"
+SESSION_ID="${ADAPT_SESSION_ID:-$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || echo adapt-reflect-$$)}"
+
+curl -s -X POST "$GATEWAY_URL/publish" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "eventType": "agents.status",
+    "source": "adapt-agent",
+    "schemaVersion": 1,
+    "payload": {
+      "sessionId": "'"$SESSION_ID"'",
+      "status": "completed",
+      "currentTool": "adapt:reflect"
+    }
+  }'
+```
+
+This event signals to the Command Center that the I&A Cycle is done. The Delivery portal and Ops console will reflect the iteration completion.

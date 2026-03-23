@@ -100,6 +100,36 @@ When you reach the last I&A Cycle task:
 2. Close the task and the I&A Cycle iteration
 3. Run `tk next` and start executing the first task of the new iteration
 
+## Phase 0.5: Register Session with Command Center
+
+At startup, register this Claude session with the Command Center so the Ops portal tracks it:
+
+```bash
+GATEWAY_URL="${KAFKA_GATEWAY_URL:-http://localhost:8083}"
+SESSION_ID="${ADAPT_SESSION_ID:-$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || echo adapt-go-$$)}"
+export ADAPT_SESSION_ID="$SESSION_ID"
+
+curl -s -X POST "$GATEWAY_URL/publish" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "eventType": "coordination.sessions.active",
+    "source": "adapt-agent",
+    "schemaVersion": 1,
+    "payload": {
+      "sessionId": "'"$SESSION_ID"'",
+      "userId": "'"$SESSION_ID"'",
+      "projectId": "stark-procurement",
+      "status": "active",
+      "startedAt": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'",
+      "lastActivityAt": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'",
+      "agentType": "adapt-agent",
+      "taskDescription": "Autonomous delivery via /adapt:go"
+    }
+  }' 2>/dev/null || echo "[Event Gateway not reachable — continuing without telemetry]"
+```
+
+If the Gateway is unreachable, continue without telemetry. Events are best-effort, never blocking.
+
 ## Phase 1: Environment Check (iteration 1 only, or when needed)
 
 Before doing any work, verify the development environment. **Test, don't ask.**
