@@ -31,12 +31,21 @@ def set_cell_shading(cell, color_hex):
     cell._tc.get_or_add_tcPr().append(shading_elm)
 
 def add_horizontal_line(doc):
-    """Add a horizontal line"""
+    """Add a horizontal line using paragraph border"""
     p = doc.add_paragraph()
-    p.paragraph_format.space_after = Pt(12)
-    run = p.add_run("─" * 80)
-    run.font.size = Pt(8)
-    run.font.color.rgb = AA_MID_GRAY
+    p.paragraph_format.space_before = Pt(18)
+    p.paragraph_format.space_after = Pt(18)
+
+    # Add bottom border to paragraph
+    pPr = p._p.get_or_add_pPr()
+    pBdr = OxmlElement('w:pBdr')
+    bottom = OxmlElement('w:bottom')
+    bottom.set(qn('w:val'), 'single')
+    bottom.set(qn('w:sz'), '6')  # 1/8 pt units, so 6 = 0.75pt
+    bottom.set(qn('w:space'), '1')
+    bottom.set(qn('w:color'), '999999')
+    pBdr.append(bottom)
+    pPr.append(pBdr)
 
 def create_document():
     """Create the full Word document"""
