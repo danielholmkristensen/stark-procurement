@@ -519,11 +519,23 @@ def create_presentation():
         "5. Finalize fixed-price commitment based on agreed scope"
     ])
 
+    # Agentic Engineering slide
+    add_content_slide(prs, "Agentic Engineering", [
+        "This is NOT 'AI-assisted development'",
+        "",
+        "AI-assisted: Human writes code, AI suggests completions",
+        "Agentic: AI agents execute engineering tasks autonomously",
+        "",
+        "Agents do the work. Humans set the direction.",
+        "",
+        "Fixed price per delivery. No rates. No surprises."
+    ])
+
     # Quote slide
     add_quote_slide(
         prs,
-        "There's a gap between 'AI helped me write this function' and 'AI systematically delivered this feature.' That gap has a name.",
-        "AGENTIC ENGINEERING"
+        "Agents do the work. Humans set the direction. That's Agentic Engineering.",
+        "AGENTIC AGENCY"
     )
 
     # Final slide
