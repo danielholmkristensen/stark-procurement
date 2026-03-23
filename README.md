@@ -1,17 +1,32 @@
 # STARK Procurement
 
-**A procurement management application for STARK Group handling purchase requisitions, purchase orders, supplier management, invoice matching, and approvals.**
+> **The Procurement System for STARK Group Denmark — handling the complete Purchase-to-Pay workflow from requisition to invoice approval.**
 
-This is one of several STARK applications built on the [STARK Command Center](https://github.com/theagenticagency/stark-command-center) platform. It inherits the platform's design system, feedback agent, and event infrastructure.
+## In Plain Terms
+
+**What it does:** Receives purchase requests from automated systems (Relex, ECom) and salespeople, bundles them into optimized purchase orders, sends them to suppliers, and matches incoming invoices for payment approval.
+
+**Why it matters:** Replaces manual processes in legacy Aspect4 with intelligent automation. The key innovation is **PO bundling with packet labeling** — combining multiple orders to the same supplier while keeping items separated for efficient receiving at branches.
+
+**Who uses it:** 30 procurement specialists managing 750,000 POs/year worth €1.1B across 10,000 suppliers.
+
+---
+
+## Scope Definition
+
+For detailed acceptance criteria, API contracts, and data models, see:
+
+📄 **[SCOPE_DEFINITION.md](../docs/scoping/SCOPE_DEFINITION.md)** — The authoritative scope document
+
+This README provides a technical overview. The scope definition provides vendor-ready specifications.
 
 ---
 
 ## Table of Contents
 
-- [What This Is](#what-this-is)
 - [Platform Relationship](#platform-relationship)
 - [Key Numbers](#key-numbers)
-- [Application Modules](#application-modules)
+- [Application Screens](#application-screens)
 - [Tech Stack](#tech-stack)
 - [Core Business Logic](#core-business-logic)
 - [System Integrations](#system-integrations)
@@ -93,87 +108,111 @@ STARK Procurement **inherits** from STARK Command Center. The platform provides 
 
 ---
 
-## Application Modules
+## Application Screens
 
-### 1. Purchase Requisitions (PRs)
+**16 screens** organized into 6 modules. Screen IDs (A1, B1, etc.) map to acceptance criteria in [SCOPE_DEFINITION.md](../docs/scoping/SCOPE_DEFINITION.md).
+
+### Dashboard (G1)
+
+**Route:** `/`
+
+Morning briefing with action-enabling metrics and work queue.
+
+| Screen | ID | Route | Purpose |
+|--------|-----|-------|---------|
+| Dashboard | G1 | `/` | Morning briefing, Handle Now queue, My Queue Today |
+
+**Key Features:**
+- Cut-off Countdown (time-bound PO urgency)
+- Requires Your Decision (exceptions needing judgment)
+- Delivery Risk Today (leading indicator)
+- Overnight Automation report
+
+### Purchase Requisitions (PRs)
 
 **Route:** `/prs`
 
 Manage incoming purchase requests from multiple sources.
 
-| Page | Route | Purpose |
-|------|-------|---------|
-| PR List | `/prs` | View and filter all PRs |
-| PR Detail | `/prs/[id]` | Individual PR with line items |
-| Ingestion Monitor | `/prs/ingestion` | Track PR ingest from sources |
-| PR-to-PO Linking | `/prs/linking` | Map PRs to purchase orders |
-| Sources Dashboard | `/prs/sources` | Monitor Relex, ECom, SalesApp feeds |
+| Screen | ID | Route | Purpose |
+|--------|-----|-------|---------|
+| PR Inbox | A1 | `/prs` | View all PRs, grouped by Source → Value |
+| PR Detail | A2 | `/prs/[id]` | Individual PR with line items |
 
 **PR Sources:**
 - **Relex (SCP)** — Automated replenishment (~70% of PRs)
 - **ECom** — Drop-shipment orders from stark.dk
 - **SalesApp** — Salesperson-initiated requests
 
-### 2. Purchase Orders (POs)
+### Purchase Orders (POs)
 
 **Route:** `/pos`
 
 Convert PRs to bundled purchase orders and track through fulfillment.
 
-| Page | Route | Purpose |
-|------|-------|---------|
-| PO List | `/pos` | View and filter all POs |
-| PO Detail | `/pos/[id]` | Order details, timeline, status |
-| Kanban Board | `/pos/kanban` | Visual pipeline by status |
+| Screen | ID | Route | Purpose |
+|--------|-----|-------|---------|
+| PO List | B1 | `/pos` | View all POs, grouped by Business Priority |
+| PO Detail | B2 | `/pos/[id]` | Order details, supplier response, timeline |
+| PO Kanban | B3 | `/pos/kanban` | Visual pipeline (Draft → Sent → Confirmed → Received) |
+| Bundling Workspace | C1 | `/pos/bundle` | Group PRs into optimized POs |
 
 **Key Features:**
 - Intelligent bundling (same supplier + location + timing)
 - Packet labeling for per-PR separation
-- Timeline visualization from creation to delivery
+- Supplier cut-off time tracking
 
-### 3. Suppliers
-
-**Route:** `/suppliers`
-
-Manage supplier master data and performance.
-
-| Page | Route | Purpose |
-|------|-------|---------|
-| Supplier List | `/suppliers` | Browse all suppliers |
-| Supplier Detail | `/suppliers/[id]` | Contact, capabilities, performance |
-
-**Key Data:**
-- `supports_packet_labeling` — Critical for bundling eligibility
-- Lead times and delivery windows
-- Communication preferences (EDI, email, portal)
-
-### 4. Invoices
+### Invoices
 
 **Route:** `/invoices`
 
-Match invoices to POs and goods receipts.
+Match invoices to POs and manage discrepancies.
 
-| Page | Route | Purpose |
-|------|-------|---------|
-| Invoice List | `/invoices` | All invoices with match status |
-| Invoice Detail | `/invoices/[id]` | Line-level matching details |
-| Match Results | `/invoices/match-results` | Successful matches for review |
-| Discrepancy Queue | `/invoices/discrepancies` | Exceptions requiring resolution |
+| Screen | ID | Route | Purpose |
+|--------|-----|-------|---------|
+| Invoice List | D1 | `/invoices` | All invoices, grouped by Match Confidence |
+| Invoice Detail | D2 | `/invoices/[id]` | Line-level matching with comparison |
+| Match Results | D3 | `/invoices/match-results` | Side-by-side PO vs Invoice |
+| Discrepancy Queue | D4 | `/invoices/discrepancies` | Exceptions requiring resolution |
 
 **Matching Types:**
-- **2-way match:** Invoice ↔ PO
-- **3-way match:** Invoice ↔ PO ↔ Goods Receipt
+- **2-way match:** Invoice ↔ PO (current)
+- **3-way match:** Invoice ↔ PO ↔ Goods Receipt (requires NYCE)
 
-### 5. Approvals
+### Approvals
 
 **Route:** `/approvals`
 
 Workflow for procurement approvals based on value thresholds.
 
-| Page | Route | Purpose |
-|------|-------|---------|
-| Approval Queue | `/approvals` | Pending items requiring action |
-| Approval History | `/approvals/history` | Completed approvals audit trail |
+| Screen | ID | Route | Purpose |
+|--------|-----|-------|---------|
+| Approval Queue | E1 | `/approvals` | Pending items, grouped by Reason |
+| Approval History | E2 | `/approvals/history` | Completed approvals audit trail |
+
+### Suppliers
+
+**Route:** `/suppliers`
+
+Manage supplier master data and performance.
+
+| Screen | ID | Route | Purpose |
+|--------|-----|-------|---------|
+| Supplier List | F1 | `/suppliers` | Browse all suppliers with performance |
+| Supplier Detail | F2 | `/suppliers/[id]` | Contact, capabilities, activity |
+
+**Key Data:**
+- `supports_packet_labeling` — Critical for bundling eligibility
+- Lead times and cut-off windows
+- Communication preferences (EDI, email, portal)
+
+### Settings
+
+**Route:** `/settings`
+
+| Screen | ID | Route | Purpose |
+|--------|-----|-------|---------|
+| Settings | H1 | `/settings` | User preferences, thresholds, tolerances |
 
 ---
 
@@ -251,6 +290,37 @@ PR-003 (Branch B, Supplier X, 8 items)   ─┴─► PO-002 (8 items, 1 packet)
 | SAP Finance | Invoice to payment | Finance module go-live |
 | SalesApp | Salesperson PRs | App enhancement |
 | Pricing Domain | Dynamic pricing | Domain deployment |
+
+### API Contracts
+
+Full API specifications are in [SCOPE_DEFINITION.md — Appendix B](../docs/scoping/SCOPE_DEFINITION.md#appendix-b-api-contracts).
+
+**Inbound APIs (we expose):**
+- `POST /api/v1/prs/relex` — Receive PR from Relex
+- `POST /api/v1/prs/ecom` — Receive PR from ECom
+- `POST /api/v1/prs/salesapp` — Receive PR from SalesApp
+- `POST /api/v1/invoices` — Receive invoice
+
+**Outbound APIs (we consume):**
+- Stark Output (EDI + Email)
+
+**Kafka Events (we publish):**
+- `stark.procurement.pr.received`
+- `stark.procurement.po.sent`
+- `stark.procurement.invoice.approved`
+
+### Data Model
+
+Entity specifications are in [SCOPE_DEFINITION.md — Appendix C](../docs/scoping/SCOPE_DEFINITION.md#appendix-c-data-model).
+
+**Core Entities:**
+| Entity | Fields | Key Relationships |
+|--------|--------|-------------------|
+| PurchaseRequest | 18 | → Supplier, Branch, → PO |
+| PurchaseOrder | 28 | → PRs, → Supplier, → Invoices |
+| Invoice | 20 | → POs, → Supplier |
+| Supplier | 22 | ← PRs, ← POs, ← Invoices |
+| Approval | 14 | → Entity (PR/PO/Invoice) |
 
 ---
 

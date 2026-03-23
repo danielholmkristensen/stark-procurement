@@ -37,6 +37,155 @@ PR Ingestion → PO Generation → Supplier Communication → Invoice Matching �
 
 ---
 
+## Users & Roles
+
+### User Population
+
+| Role | Count (est.) | Primary Function |
+|------|--------------|------------------|
+| **Buyer** | ~20 | PR review, PO creation, bundling, invoice matching |
+| **Approver** | ~8 | PO approval, invoice approval, exception handling |
+| **Admin** | ~2 | System configuration, user support, reporting |
+| **Total** | **~30** | |
+
+### Role Definitions
+
+| Role | Description |
+|------|-------------|
+| **Buyer** | Day-to-day procurement operations. Reviews PRs, creates/sends POs, matches invoices, resolves discrepancies within tolerance. Cannot approve above their personal authority limit. |
+| **Approver** | Decision authority for high-value transactions. Approves POs and invoices above threshold. Handles escalated discrepancies. May also perform Buyer functions. |
+| **Admin** | System configuration and support. Manages thresholds, supplier preferences, cut-off times, user authority limits, and delegations. No transactional authority beyond Approver role. |
+
+### Permission Matrix
+
+| Screen / Action | Buyer | Approver | Admin |
+|-----------------|-------|----------|-------|
+| **Dashboard** | View own KPIs | View team KPIs | View all KPIs |
+| **PR Inbox** | View, convert to PO | View, convert to PO | View only |
+| **PO Create/Edit** | Yes (draft) | Yes (draft) | No |
+| **PO Send** | Within own limit | Within own limit | No |
+| **PO Approve** | No | Yes | No |
+| **Bundling Workspace** | Yes | Yes | View only |
+| **Invoice Match** | Yes | Yes | View only |
+| **Invoice Approve** | Within own limit | Within own limit | No |
+| **Discrepancy Resolve** | Within tolerance | Any | No |
+| **Supplier Preferences** | View | View | Edit |
+| **Threshold Config** | No | No | Yes |
+| **User Authority Config** | No | No | Yes |
+| **Delegation Management** | Own only | Own only | Any user |
+
+### Who Is NOT a User
+
+| Persona | Why Not | How They Interact |
+|---------|---------|-------------------|
+| Suppliers | No portal in Phase 1 | Receive POs via EDI/email |
+| Finance/AP | SAP Finance users | Consume approved invoices via Kafka |
+| Warehouse | NYCE users | Future: goods receipt integration |
+| Branch Managers | BI/reporting tools | No direct system access |
+
+### Role Management — OUT OF SCOPE
+
+| Capability | Reason |
+|------------|--------|
+| Role assignment UI | Roles managed in STARK SSO/IAM |
+| Role creation | Fixed roles: Buyer, Approver, Admin |
+| Custom permission editor | Fixed permission matrix per above |
+
+**Note:** We consume roles from SSO token claims. No role table in our database.
+
+---
+
+## Approval Workflow
+
+### Authority Matrix (Per-User Limits)
+
+Each user has an individual approval authority limit, not just role-based:
+
+| Attribute | Description |
+|-----------|-------------|
+| `approvalLimitDKK` | Maximum value user can approve per transaction |
+| `effectiveFrom` | When limit becomes active |
+| `effectiveTo` | When limit expires (nullable = indefinite) |
+| `setBy` | Admin who configured the limit |
+
+**Example:**
+
+| User | Role | Approval Limit (DKK) |
+|------|------|---------------------|
+| Anna Jensen | Buyer | 10,000 |
+| Erik Nielsen | Buyer | 25,000 |
+| Mette Hansen | Approver | 100,000 |
+| Lars Pedersen | Approver | 500,000 |
+| CFO | Approver | Unlimited |
+
+**Behavior:** User can approve up to their limit. Above limit → item routes to someone with higher authority.
+
+### Multi-Level Approval (4-Eyes Principle)
+
+Configurable approval chains for high-value transactions:
+
+| PO/Invoice Value (DKK) | Required Approvals |
+|------------------------|-------------------|
+| < 10,000 | Single approval (within approver's limit) |
+| 10,000 – 50,000 | 2 approvals required |
+| 50,000 – 200,000 | 3 approvals required |
+| > 200,000 | 4 approvals required (includes CFO) |
+
+**Rules:**
+- Each approver must be a different person
+- Each approver must have sufficient authority for their portion
+- Chain is sequential (Approver 1 → Approver 2 → ...)
+- Auto-escalate after 48h if not actioned
+
+### Delegation (Proxy Approval)
+
+| Attribute | Description |
+|-----------|-------------|
+| `delegatorId` | User granting authority |
+| `delegateId` | User receiving authority |
+| `startDate` | When delegation activates |
+| `endDate` | When delegation expires (auto-expire) |
+| `scope` | ALL, PO_ONLY, INVOICE_ONLY |
+| `maxValueDKK` | Optional cap on delegated authority |
+
+**Setup options:**
+- **Self-service:** User delegates via their profile
+- **Admin:** Admin sets delegation for any user
+
+**Audit trail:** "Approved by [delegate] on behalf of [delegator]"
+
+**Notifications:** Delegator notified of actions taken on their behalf
+
+### Bulk Approval
+
+| Capability | Constraint |
+|------------|------------|
+| Multi-select in queue | Checkbox per item |
+| Bulk approve action | Single click for selected items |
+| Authority check | Each item must be within user's limit |
+| Same-type requirement | Cannot mix POs and Invoices in one bulk action |
+| Review before confirm | Must expand summary before confirming |
+| Individual audit | Each item logged separately |
+
+### Separation of Duties
+
+| Rule | Enforcement |
+|------|-------------|
+| No self-approval | Cannot approve PR/PO/Invoice you created |
+| Distinct chain approvers | Multi-level chain requires different users |
+| Admin override | Admin can override with documented reason (audit logged) |
+
+### Admin UI for Approval Configuration
+
+| Screen | Function | Location |
+|--------|----------|----------|
+| User Authority | Set per-user approval limits | Settings > Users |
+| Approval Chains | Define value thresholds and required approvers | Settings > Approval Rules |
+| Delegation Management | View/edit all active delegations | Settings > Delegations |
+| Approval Audit Log | View all approval actions with full context | Reports > Audit |
+
+---
+
 ## Scope Structure
 
 This document defines scope across **5 mutually exclusive domains**:
@@ -201,6 +350,16 @@ For each domain, we define:
 | User Preferences | PostgreSQL | Indefinite |
 | Audit Log | PostgreSQL | 7 years |
 
+**Hosting & Operations Responsibility:**
+
+| Aspect | Vendor Delivers | Customer Owns (Post-Handover) |
+|--------|-----------------|-------------------------------|
+| Hosting Region | Application configured for EU deployment | Infrastructure in European region (Azure, AWS, or designated provider) |
+| Database | Schema, migrations, indexes, seed scripts | PostgreSQL instance provision |
+| Daily Operations | Runbooks, monitoring hooks, alert definitions | Backup execution, restore testing, maintenance windows |
+| Scaling | Application auto-scales on serverless | Database scaling decisions |
+| **Costs** | Included in fixed-price delivery | DB hosting, infrastructure, ongoing cloud costs |
+
 ### 3.2 Data Queries — IN SCOPE
 
 | Query Type | Description |
@@ -211,23 +370,16 @@ For each domain, we define:
 | Search | Full-text search on key fields |
 | Reports | Export to CSV/Excel |
 
-### 3.3 Data Sync — IN SCOPE
-
-| Sync Type | Description |
-|-----------|-------------|
-| Offline-First | Local IndexedDB for resilience |
-| Background Sync | Queue changes when offline |
-| Conflict Resolution | Last-write-wins with audit |
-
-### 3.4 Data — OUT OF SCOPE
+### 3.3 Data — OUT OF SCOPE
 
 | Item | Owner |
 |------|-------|
+| Offline-first / PWA | Not required — standard request/response with retry |
 | Data warehouse / analytics | BI team |
 | Long-term archival | Enterprise storage team |
 | GDPR data subject requests | Legal/compliance team |
 
-### 3.5 Data — BOUNDARY
+### 3.4 Data — BOUNDARY
 
 | Handoff | Our Side | Their Side |
 |---------|----------|------------|
@@ -239,84 +391,161 @@ For each domain, we define:
 
 ## Domain 4: Integrations
 
-### 4.1 Inbound: PR Sources — IN SCOPE
+> **Architecture Decision:** Kafka-native integration with per-source/per-consumer topic modularity. REST fallback for sources that cannot use Kafka. Customer provisions topics in existing STARK Kafka cluster; vendor delivers specs and consumer/producer code.
 
-| Source | Protocol | Our Deliverable |
-|--------|----------|-----------------|
-| Relex | REST API | Endpoint: `POST /api/v1/prs/relex` |
-| ECom | REST API | Endpoint: `POST /api/v1/prs/ecom` |
-| SalesApp | REST API | Endpoint: `POST /api/v1/prs/salesapp` |
-| Aspect4 | REST API | Endpoint: `POST /api/v1/pos/aspect4` (interim) |
+### 4.1 Integration Infrastructure — BOUNDARY
 
-**API Contract Example: Relex PR**
+| Component | Vendor Delivers | Customer Provisions |
+|-----------|-----------------|---------------------|
+| Kafka Cluster | — | Existing STARK cluster (no new infra) |
+| Schema Registry | Avro/JSON schemas per topic | Registry instance, schema deployment |
+| Topics | Topic specs (names, partitions, retention) | Topic creation per specs |
+| ACLs | ACL specifications per topic | ACL configuration in cluster |
+| Consumers | Consumer code for all inbound topics | — |
+| Producers | Producer code for all outbound topics | — |
+| DLQ Handling | DLQ processing logic, alerting hooks | DLQ topic provisioning |
+
+### 4.2 Inbound: PR Sources — IN SCOPE
+
+**Primary: Kafka (per-source topics)**
+
+| Source | Topic | Consumer | DLQ Topic |
+|--------|-------|----------|-----------|
+| Relex | `stark.procurement.inbound.prs.relex` | `PRRelexConsumer` | `stark.procurement.inbound.prs.relex.dlq` |
+| ECom | `stark.procurement.inbound.prs.ecom` | `PREComConsumer` | `stark.procurement.inbound.prs.ecom.dlq` |
+| SalesApp | `stark.procurement.inbound.prs.salesapp` | `PRSalesAppConsumer` | `stark.procurement.inbound.prs.salesapp.dlq` |
+| Aspect4 | `stark.procurement.inbound.pos.aspect4` | `POAspect4Consumer` | `stark.procurement.inbound.pos.aspect4.dlq` |
+
+**Fallback: REST API (for sources that cannot use Kafka)**
+
+| Source | Endpoint | Auth |
+|--------|----------|------|
+| Any | `POST /api/v1/prs/{source}` | API Key (`X-API-Key` header) |
+| Any | `POST /api/v1/pos/{source}` | API Key (`X-API-Key` header) |
+
+REST endpoints internally publish to the corresponding Kafka topic, ensuring uniform processing.
+
+**Message Schema Example: PR Message**
 
 ```json
-// POST /api/v1/prs/relex
-// Request
 {
-  "sourceReference": "RELEX-2026-123456",
-  "branchId": "DK-084",
-  "supplierId": "SUP-10042",
-  "needByDate": "2026-03-25",
-  "items": [
-    { "sku": "SKU-12345", "quantity": 100, "unitPrice": 45.00 }
-  ]
-}
-
-// Response: 201 Created
-{
-  "prId": "pr-uuid-here",
-  "prNumber": "PR-2026-00001",
-  "status": "pending"
+  "messageId": "uuid",
+  "messageTimestamp": "2026-03-23T08:30:00Z",
+  "source": "relex",
+  "payload": {
+    "sourceReference": "RELEX-2026-123456",
+    "branchId": "DK-084",
+    "supplierId": "SUP-10042",
+    "needByDate": "2026-03-25",
+    "items": [
+      { "sku": "SKU-12345", "quantity": 100, "unitPrice": 45.00 }
+    ]
+  }
 }
 ```
 
-### 4.2 Outbound: Supplier Communication — IN SCOPE
+### 4.3 Outbound: Supplier Communication — IN SCOPE
 
-| Channel | Protocol | Our Deliverable |
-|---------|----------|-----------------|
-| EDI | EDIFACT via Stark Output | Format PO as EDIFACT, send to Stark Output API |
-| Email | SMTP via Stark Output | Format PO as email payload, send to Stark Output API |
+**Per-channel Kafka topics**
 
-**BOUNDARY:** We format the message. Stark Output delivers it.
+| Channel | Topic | Producer | Consumer |
+|---------|-------|----------|----------|
+| EDI | `stark.procurement.outbound.pos.edi` | Our app | EDI Gateway / Stark Output |
+| Email | `stark.procurement.outbound.pos.email` | Our app | Stark Output |
+| Portal | `stark.procurement.outbound.pos.portal` | Our app | Supplier Portal (future) |
 
-### 4.3 Outbound: Status Events — IN SCOPE
+**DLQ Topics (per channel)**
 
-| Event | Kafka Topic | Payload |
-|-------|-------------|---------|
-| PR Received | `stark.procurement.pr.received` | PR ID, source, timestamp |
-| PO Created | `stark.procurement.po.created` | PO ID, PR IDs, supplier |
-| PO Sent | `stark.procurement.po.sent` | PO ID, channel, timestamp |
-| PO Confirmed | `stark.procurement.po.confirmed` | PO ID, delivery date |
-| Invoice Matched | `stark.procurement.invoice.matched` | Invoice ID, PO IDs, status |
-| Invoice Approved | `stark.procurement.invoice.approved` | Invoice ID, approver |
+| Channel | DLQ Topic | Alert On |
+|---------|-----------|----------|
+| EDI | `stark.procurement.outbound.pos.edi.dlq` | Any message |
+| Email | `stark.procurement.outbound.pos.email.dlq` | Any message |
 
-### 4.4 Outbound: Status API — IN SCOPE
+**Failure Handling (built into Kafka patterns)**
 
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /api/v1/prs/{id}` | PR status for source systems |
-| `GET /api/v1/pos/{id}` | PO status for tracking |
-| `GET /api/v1/invoices/{id}` | Invoice status |
+| Scenario | Handling |
+|----------|----------|
+| Consumer down | Messages persist in topic until consumer recovers |
+| Processing failure | Retry 3x with exponential backoff, then route to DLQ |
+| DLQ message | Alert ops, manual review/replay via admin UI |
+| Permanent failure | Mark as failed in DB, notify user |
 
-### 4.5 Integrations — OUT OF SCOPE
+### 4.4 Outbound: Status Events — IN SCOPE
+
+**Lightweight notification events (IDs + metadata, not full payloads)**
+
+| Event | Topic | Payload Fields |
+|-------|-------|----------------|
+| PR Received | `stark.procurement.events.pr.received` | `prId`, `source`, `timestamp` |
+| PO Created | `stark.procurement.events.po.created` | `poId`, `prIds[]`, `supplierId`, `timestamp` |
+| PO Sent | `stark.procurement.events.po.sent` | `poId`, `channel`, `timestamp` |
+| PO Confirmed | `stark.procurement.events.po.confirmed` | `poId`, `confirmedDeliveryDate`, `timestamp` |
+| Invoice Matched | `stark.procurement.events.invoice.matched` | `invoiceId`, `poIds[]`, `matchStatus`, `timestamp` |
+| Invoice Approved | `stark.procurement.events.invoice.approved` | `invoiceId`, `approverId`, `timestamp` |
+
+**Event Type:** Informational/notification. Consumers needing full data should call Status API.
+
+### 4.5 Outbound: Status API — IN SCOPE
+
+| Endpoint | Purpose | Auth |
+|----------|---------|------|
+| `GET /api/v1/prs/{id}` | Full PR details for source systems | API Key or Bearer |
+| `GET /api/v1/pos/{id}` | Full PO details for tracking | API Key or Bearer |
+| `GET /api/v1/invoices/{id}` | Full invoice details | API Key or Bearer |
+
+### 4.6 Outbound: Finance Export — IN SCOPE
+
+| Export | Trigger | Format | Destination |
+|--------|---------|--------|-------------|
+| Approved Invoices | Nightly batch or on-demand | CSV (SAP-compatible) | `stark.procurement.outbound.finance.invoices` |
+| PO Commitments | On PO approval | CSV | `stark.procurement.outbound.finance.commitments` |
+
+**Note:** Finance team consumes from Kafka topics. CSV schema agreed with SAP Finance team.
+
+### 4.7 Integration Security — IN SCOPE
+
+| Layer | Mechanism | Vendor Delivers | Customer Configures |
+|-------|-----------|-----------------|---------------------|
+| Transport | TLS 1.3 | Require TLS in consumer/producer config | Cluster TLS setup |
+| Authentication | SASL/SCRAM or mTLS | Connection config templates | Credentials/certs |
+| Authorization | Kafka ACLs | ACL spec per topic | ACL deployment |
+| REST Fallback | API Key + optional IP whitelist | Key validation logic | Key provisioning |
+
+**ACL Specification Example:**
+
+```
+# Relex can only write to their inbound topic
+User:relex-producer ALLOW WRITE on stark.procurement.inbound.prs.relex
+
+# Our app can read all inbound, write all outbound
+User:procurement-app ALLOW READ on stark.procurement.inbound.*
+User:procurement-app ALLOW WRITE on stark.procurement.outbound.*
+User:procurement-app ALLOW WRITE on stark.procurement.events.*
+
+# Finance can only read their export topics
+User:finance-consumer ALLOW READ on stark.procurement.outbound.finance.*
+```
+
+### 4.8 Integrations — OUT OF SCOPE
 
 | Integration | Owner | Our Workaround |
 |-------------|-------|----------------|
-| SAP Finance (invoice push) | SAP Finance team | Export CSV for manual import |
-| NYCE (goods receipt) | NYCE team | Manual GR entry in our system |
+| SAP Finance (direct API) | SAP Finance team | Kafka export + CSV format |
+| NYCE (goods receipt) | NYCE team | Manual GR entry option in UI |
 | Pricing Domain (live lookup) | Pricing team | Use PR prices or fallback table |
-| SalesApp (bidirectional sync) | SalesApp team | One-way: they push to us |
+| SalesApp (bidirectional sync) | SalesApp team | One-way: they publish to Kafka |
 
-### 4.6 Integrations — BOUNDARY
+### 4.9 Integrations — BOUNDARY
 
-| System | We Do | They Do |
-|--------|-------|---------|
-| Relex | Expose endpoint, parse their format | Send PRs in agreed format |
-| ECom | Expose endpoint, parse their format | Send PRs in agreed format |
-| SalesApp | Expose endpoint, parse their format | Send PRs in agreed format |
-| Stark Output | Format message, call their API | Deliver to supplier |
-| Kafka | Publish events to our topics | Consume from our topics |
+| System | Vendor Delivers | Customer/Partner Owns |
+|--------|-----------------|----------------------|
+| Relex | Consumer, schema, DLQ handling | Publish to topic in agreed schema |
+| ECom | Consumer, schema, DLQ handling | Publish to topic in agreed schema |
+| SalesApp | Consumer, schema, DLQ handling | Publish to topic in agreed schema |
+| Stark Output | Producer, message formatting | Consume from outbound topics, deliver to supplier |
+| EDI Gateway | Producer, EDIFACT formatting | Consume from EDI topic, transmit |
+| SAP Finance | Producer, CSV formatting | Consume from finance topics, import |
+| Kafka Cluster | Connection code, topic specs, ACL specs | Cluster ops, topic provisioning, ACL config |
 
 ---
 
@@ -403,31 +632,20 @@ For each domain, we define:
 
 ## Delivery Model
 
-### Agentic Development
-
-This project uses **agentic development** — AI-assisted coding at 8x traditional velocity.
-
-| Metric | Traditional | Agentic |
-|--------|-------------|---------|
-| Lines of Code / Day | 185 | 1,500 |
-| Bug Fix Turnaround | 1-3 days | Same day |
-| Feature Iteration | Weekly | Daily |
-| Feedback Incorporation | Sprint boundary | Immediate |
-
 ### Scope Flexibility Tiers
 
 | Tier | Examples | Change Process |
 |------|----------|----------------|
 | **FIXED** | Core PR→PO→Invoice flow | Formal change request, re-estimation |
-| **FLEXIBLE** | Dashboard layout, column order, filter options | Adjust within sprint, no re-estimation |
+| **FLEXIBLE** | Dashboard layout, column order, filter options | Adjust within increment, no re-estimation |
 | **ADDITIVE** | New report, additional status badge | Add if capacity allows |
 
-### What Agentic Means for You
+### Delivery Principles
 
-1. **Faster Feedback** — See working features same-day, not next-sprint
-2. **Lower Change Cost** — Adjustments within FLEXIBLE tier are free
-3. **Higher Quality** — More time for polish, fewer compromises
-4. **Real Demos** — Working software, not wireframes
+1. **Working Software** — Demos use real working features, not mockups
+2. **Continuous Feedback** — Feedback incorporated within increments, not at sprint boundaries
+3. **Flexible Within Tiers** — FLEXIBLE items adjusted without change control overhead
+4. **Incremental Value** — Each delivery milestone provides usable functionality
 
 ---
 
